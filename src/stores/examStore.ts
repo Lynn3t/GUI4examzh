@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Exam, ExamInfo, Question } from '@/types/exam'
+import type { Exam, ExamInfo, Question, ExamMaterial, ExamPoem } from '@/types/exam'
 
 interface ExamState {
   exam: Exam
@@ -21,6 +21,12 @@ interface ExamState {
     canRedo: () => boolean
     importExam: (exam: Exam) => void
     clearExam: () => void
+    addMaterial: (material: ExamMaterial) => void
+    updateMaterial: (id: string, updates: Partial<ExamMaterial>) => void
+    deleteMaterial: (id: string) => void
+    addPoem: (poem: ExamPoem) => void
+    updatePoem: (id: string, updates: Partial<ExamPoem>) => void
+    deletePoem: (id: string) => void
   }
 }
 
@@ -39,6 +45,8 @@ const initialState: Exam = {
       studentId: '学号',
     },
   },
+  materials: [],
+  poems: [],
   questions: [],
 }
 
@@ -146,6 +154,8 @@ const useExamStore = create<ExamState>()(
                 studentId: '学号',
               },
             },
+            materials: [],
+            poems: [],
             questions: [],
           }
           set(() => ({
@@ -154,6 +164,58 @@ const useExamStore = create<ExamState>()(
             history: [emptyExam],
             historyIndex: 0,
           }))
+        },
+        addMaterial: (material) => {
+          const newExam = {
+            ...get().exam,
+            materials: [...get().exam.materials, material],
+          }
+          set({ exam: newExam })
+          addToHistory(newExam, set)
+        },
+        updateMaterial: (id, updates) => {
+          const newExam = {
+            ...get().exam,
+            materials: get().exam.materials.map((m) =>
+              m.id === id ? { ...m, ...updates } : m
+            ),
+          }
+          set(() => ({ exam: newExam }))
+          addToHistory(newExam, set)
+        },
+        deleteMaterial: (id) => {
+          const newExam = {
+            ...get().exam,
+            materials: get().exam.materials.filter((m) => m.id !== id),
+          }
+          set(() => ({ exam: newExam }))
+          addToHistory(newExam, set)
+        },
+        addPoem: (poem) => {
+          const newExam = {
+            ...get().exam,
+            poems: [...get().exam.poems, poem],
+          }
+          set({ exam: newExam })
+          addToHistory(newExam, set)
+        },
+        updatePoem: (id, updates) => {
+          const newExam = {
+            ...get().exam,
+            poems: get().exam.poems.map((p) =>
+              p.id === id ? { ...p, ...updates } : p
+            ),
+          }
+          set(() => ({ exam: newExam }))
+          addToHistory(newExam, set)
+        },
+        deletePoem: (id) => {
+          const newExam = {
+            ...get().exam,
+            poems: get().exam.poems.filter((p) => p.id !== id),
+          }
+          set(() => ({ exam: newExam }))
+          addToHistory(newExam, set)
         },
       },
     }),

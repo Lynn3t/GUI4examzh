@@ -71,25 +71,7 @@ export interface CalculationsQuestion {
   solution?: string
 }
 
-export interface MaterialQuestion {
-  id: string
-  type: 'material'
-  content: string
-  title?: string
-  author?: string
-  source?: string
-  points: number
-}
 
-export interface PoemQuestion {
-  id: string
-  type: 'poem'
-  content: string
-  title?: string
-  author?: string
-  points: number
-  annotations: { text: string; index: number }[] // 注释列表
-}
 
 export interface WritingQuestion {
   id: string
@@ -107,10 +89,32 @@ export interface SelectQuestion {
   items: { text: string; marked: boolean }[] // 选项列表，marked 表示是否被标记
 }
 
-export type Question = ChoiceQuestion | FillinQuestion | ProblemQuestion | JudgmentQuestion | LineQuestion | CalculationsQuestion | MaterialQuestion | PoemQuestion | WritingQuestion | SelectQuestion
+export interface ExamMaterial {
+  id: string
+  type: 'material'
+  content: string
+  title?: string
+  author?: string
+  source?: string
+}
+
+export interface ExamPoem {
+  id: string
+  type: 'poem'
+  content: string
+  title?: string
+  author?: string
+  annotations: { text: string; index: number }[] // 注释列表
+}
+
+export type NormalQuestion = ChoiceQuestion | FillinQuestion | ProblemQuestion | JudgmentQuestion | LineQuestion | CalculationsQuestion | WritingQuestion | SelectQuestion
+
+export type Question = NormalQuestion
 
 export interface Exam {
   id: string
   info: ExamInfo
+  materials: ExamMaterial[]
+  poems: ExamPoem[]
   questions: Question[]
 }

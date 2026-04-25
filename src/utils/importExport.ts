@@ -29,7 +29,7 @@ export function importExamFromJson(file: File): Promise<Exam> {
         const exam = JSON.parse(json) as Exam
         
         // 验证数据结构
-        if (!exam.info || !exam.questions) {
+        if (!exam.info || !exam.questions || !exam.materials || !exam.poems) {
           throw new Error('无效的试卷数据格式')
         }
         

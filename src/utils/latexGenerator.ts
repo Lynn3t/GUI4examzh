@@ -1,4 +1,4 @@
-import type { Exam, Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion, CalculationsQuestion, MaterialQuestion, PoemQuestion, WritingQuestion, SelectQuestion } from '@/types/exam'
+import type { Exam, Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion, CalculationsQuestion, WritingQuestion, SelectQuestion, ExamMaterial, ExamPoem } from '@/types/exam'
 
 /**
  * 将试卷数据转换为 LaTeX 代码
@@ -36,6 +36,17 @@ export function generateLatex(exam: Exam): string {
   latex += `\\vspace{1em}\n\n`
 
   // 题目部分
+  // 先输出材料
+  exam.materials.forEach((material) => {
+    latex += generateMaterialLatex(material)
+  })
+  
+  // 再输出古诗
+  exam.poems.forEach((poem) => {
+    latex += generatePoemLatex(poem)
+  })
+  
+  // 最后输出普通题目
   exam.questions.forEach((question, index) => {
     latex += generateQuestionLatex(question, index + 1)
   })
@@ -69,12 +80,6 @@ function generateQuestionLatex(question: Question, index: number): string {
       break
     case 'calculations':
       latex += generateCalculationsQuestionLatex(question, index)
-      break
-    case 'material':
-      latex += generateMaterialQuestionLatex(question, index)
-      break
-    case 'poem':
-      latex += generatePoemQuestionLatex(question, index)
       break
     case 'writing':
       latex += generateWritingQuestionLatex(question, index)
@@ -222,28 +227,25 @@ function generateCalculationsQuestionLatex(question: CalculationsQuestion, _inde
 /**
  * 生成语文材料文章 LaTeX 代码
  */
-function generateMaterialQuestionLatex(question: MaterialQuestion, _index: number): string {
+function generateMaterialLatex(material: ExamMaterial): string {
   let latex = ''
 
-  // 构建 material 环境的可选参数
   const options: string[] = []
-  if (question.title) {
-    options.push(`title = {${question.title}}`)
+  if (material.title) {
+    options.push(`title = {${material.title}}`)
   }
-  if (question.author) {
-    options.push(`author = {${question.author}}`)
+  if (material.author) {
+    options.push(`author = {${material.author}}`)
   }
-  if (question.source) {
-    options.push(`source = {${question.source}}`)
+  if (material.source) {
+    options.push(`source = {${material.source}}`)
   }
 
   const optionsStr = options.length > 0 ? `[${options.join(', ')}]` : ''
 
-  latex += `\\begin{question}[points = ${question.points}]\n`
-  latex += `  \\begin{material}${optionsStr}\n`
-  latex += `    ${question.content}\n`
-  latex += `  \\end{material}\n`
-  latex += `\\end{question}\n\n`
+  latex += `\\begin{material}${optionsStr}\n`
+  latex += `  ${material.content}\n`
+  latex += `\\end{material}\n\n`
 
   return latex
 }
@@ -251,33 +253,29 @@ function generateMaterialQuestionLatex(question: MaterialQuestion, _index: numbe
 /**
  * 生成语文古诗 LaTeX 代码
  */
-function generatePoemQuestionLatex(question: PoemQuestion, _index: number): string {
+function generatePoemLatex(poem: ExamPoem): string {
   let latex = ''
 
-  // 构建 poem 环境的可选参数
   const options: string[] = []
-  if (question.title) {
-    options.push(`title = {${question.title}}`)
+  if (poem.title) {
+    options.push(`title = {${poem.title}}`)
   }
-  if (question.author) {
-    options.push(`author = {${question.author}}`)
+  if (poem.author) {
+    options.push(`author = {${poem.author}}`)
   }
 
   const optionsStr = options.length > 0 ? `[${options.join(', ')}]` : ''
 
-  latex += `\\begin{question}[points = ${question.points}]\n`
-  latex += `  \\begin{poem}${optionsStr}\n`
+  latex += `\\begin{poem}${optionsStr}\n`
   
-  // 处理古诗内容，替换注释标记
-  let content = question.content
-  question.annotations.forEach((annotation, i) => {
+  let content = poem.content
+  poem.annotations.forEach((annotation, i) => {
     const placeholder = `{\\zhu{${annotation.text}}}`
     content = content.replace(`{${i + 1}}`, placeholder)
   })
   
-  latex += `    ${content}\n`
-  latex += `  \\end{poem}\n`
-  latex += `\\end{question}\n\n`
+  latex += `  ${content}\n`
+  latex += `\\end{poem}\n\n`
 
   return latex
 }

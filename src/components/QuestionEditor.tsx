@@ -5,13 +5,16 @@ import { useExamStore } from '@/stores/examStore'
 import FormulaEditor from './FormulaEditor'
 import ImageProcessor from './ImageProcessor'
 import GeometryDrawer from './GeometryDrawer'
-import type { Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion, CalculationsQuestion, MaterialQuestion, PoemQuestion, WritingQuestion, SelectQuestion } from '@/types/exam'
+import type { Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion, CalculationsQuestion, ExamMaterial, ExamPoem, WritingQuestion, SelectQuestion } from '@/types/exam'
 
 function QuestionEditor() {
   const { exam, selectedQuestionId, actions } = useExamStore()
   const [tabValue, setTabValue] = useState(0)
   const [formula, setFormula] = useState('')
+  
   const question = exam.questions.find((q) => q.id === selectedQuestionId)
+  const material = exam.materials.find((m) => m.id === selectedQuestionId)
+  const poem = exam.poems.find((p) => p.id === selectedQuestionId)
 
   const handleImageInsert = (svgContent: string) => {
     // 将图片代码插入到当前题目的题干中
@@ -29,7 +32,7 @@ function QuestionEditor() {
     }
   }
 
-  if (!question) {
+  if (!question && !material && !poem) {
     return (
       <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
         <Typography>请选择一道题目进行编辑</Typography>
@@ -37,8 +40,13 @@ function QuestionEditor() {
     )
   }
 
+  // 判断当前选中的是哪种类型
+  const isQuestion = Boolean(question)
+  const isMaterial = Boolean(material)
+  const isPoem = Boolean(poem)
+
   const updateQuestion = (updates: Partial<Question>) => {
-    if (selectedQuestionId) {
+    if (selectedQuestionId && question) {
       actions.updateQuestion(selectedQuestionId, updates)
     }
   }
@@ -306,7 +314,7 @@ function QuestionEditor() {
   )
 
   // 语文材料文章编辑器
-  const renderMaterialEditor = (q: MaterialQuestion) => (
+  const renderMaterialEditor = (q: ExamMaterial) => (
     <Box>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={6}>
@@ -314,7 +322,7 @@ function QuestionEditor() {
             fullWidth
             label="标题"
             value={q.title || ''}
-            onChange={(e) => updateQuestion({ title: e.target.value })}
+            onChange={(e) => actions.updateMaterial(q.id, { title: e.target.value })}
             size="small"
           />
         </Grid>
@@ -323,7 +331,7 @@ function QuestionEditor() {
             fullWidth
             label="作者"
             value={q.author || ''}
-            onChange={(e) => updateQuestion({ author: e.target.value })}
+            onChange={(e) => actions.updateMaterial(q.id, { author: e.target.value })}
             size="small"
           />
         </Grid>
@@ -332,7 +340,7 @@ function QuestionEditor() {
         fullWidth
         label="来源"
         value={q.source || ''}
-        onChange={(e) => updateQuestion({ source: e.target.value })}
+        onChange={(e) => actions.updateMaterial(q.id, { source: e.target.value })}
         size="small"
         margin="normal"
       />
@@ -341,7 +349,7 @@ function QuestionEditor() {
         multiline
         label="文章内容"
         value={q.content}
-        onChange={(e) => updateQuestion({ content: e.target.value })}
+        onChange={(e) => actions.updateMaterial(q.id, { content: e.target.value })}
         margin="normal"
         rows={6}
       />
@@ -349,7 +357,7 @@ function QuestionEditor() {
   )
 
   // 语文古诗编辑器
-  const renderPoemEditor = (q: PoemQuestion) => (
+  const renderPoemEditor = (q: ExamPoem) => (
     <Box>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={6}>
@@ -357,7 +365,7 @@ function QuestionEditor() {
             fullWidth
             label="标题"
             value={q.title || ''}
-            onChange={(e) => updateQuestion({ title: e.target.value })}
+            onChange={(e) => actions.updatePoem(q.id, { title: e.target.value })}
             size="small"
           />
         </Grid>
@@ -366,7 +374,7 @@ function QuestionEditor() {
             fullWidth
             label="作者"
             value={q.author || ''}
-            onChange={(e) => updateQuestion({ author: e.target.value })}
+            onChange={(e) => actions.updatePoem(q.id, { author: e.target.value })}
             size="small"
           />
         </Grid>
@@ -376,7 +384,7 @@ function QuestionEditor() {
         multiline
         label="古诗内容（使用 {1}、{2} 等标记注释位置）"
         value={q.content}
-        onChange={(e) => updateQuestion({ content: e.target.value })}
+        onChange={(e) => actions.updatePoem(q.id, { content: e.target.value })}
         margin="normal"
         rows={6}
       />
@@ -393,14 +401,14 @@ function QuestionEditor() {
             onChange={(e) => {
               const newAnnotations = [...q.annotations]
               newAnnotations[index] = { ...newAnnotations[index], text: e.target.value }
-              updateQuestion({ annotations: newAnnotations })
+              actions.updatePoem(q.id, { annotations: newAnnotations })
             }}
           />
           <IconButton
             size="small"
             onClick={() => {
               const newAnnotations = q.annotations.filter((_, i) => i !== index)
-              updateQuestion({ annotations: newAnnotations })
+              actions.updatePoem(q.id, { annotations: newAnnotations })
             }}
           >
             <RemoveIcon />
@@ -410,7 +418,7 @@ function QuestionEditor() {
       <Button
         startIcon={<AddIcon />}
         onClick={() => {
-          updateQuestion({ annotations: [...q.annotations, { text: '', index: q.annotations.length + 1 }] })
+          actions.updatePoem(q.id, { annotations: [...q.annotations, { text: '', index: q.annotations.length + 1 }] })
         }}
       >
         添加注释
@@ -508,32 +516,6 @@ function QuestionEditor() {
 
   return (
     <Box>
-      {/* 题目类型和分数 */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={8}>
-          <Typography variant="subtitle2" color="text.secondary">
-            题目类型
-          </Typography>
-          <Typography variant="body1">
-            {question.type === 'choice' && '选择题'}
-            {question.type === 'fillin' && '填空题'}
-            {question.type === 'problem' && '解答题'}
-            {question.type === 'judgment' && '判断题'}
-            {question.type === 'line' && '连线题'}
-          </Typography>
-        </Grid>
-        <Grid item xs={4}>
-          <TextField
-            fullWidth
-            label="分数"
-            type="number"
-            value={question.points}
-            onChange={(e) => updateQuestion({ points: parseInt(e.target.value) || 0 })}
-            size="small"
-          />
-        </Grid>
-      </Grid>
-
       {/* 标签页 */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
@@ -547,17 +529,45 @@ function QuestionEditor() {
       {/* 题目编辑标签页 */}
       {tabValue === 0 && (
         <Box sx={{ mt: 2 }}>
-          {/* 题目类型特定的编辑器 */}
-          {question.type === 'choice' && renderChoiceEditor(question)}
-          {question.type === 'fillin' && renderFillinEditor(question)}
-          {question.type === 'problem' && renderProblemEditor(question)}
-          {question.type === 'judgment' && renderJudgmentEditor(question)}
-          {question.type === 'line' && renderLineEditor(question)}
-          {question.type === 'calculations' && renderCalculationsEditor(question)}
-          {question.type === 'material' && renderMaterialEditor(question)}
-          {question.type === 'poem' && renderPoemEditor(question)}
-          {question.type === 'writing' && renderWritingEditor(question)}
-          {question.type === 'select' && renderSelectEditor(question)}
+          {isMaterial && material && renderMaterialEditor(material)}
+          {isPoem && poem && renderPoemEditor(poem)}
+          {isQuestion && question && (
+            <>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                题目类型
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                {question.type === 'choice' && '选择题'}
+                {question.type === 'fillin' && '填空题'}
+                {question.type === 'problem' && '解答题'}
+                {question.type === 'judgment' && '判断题'}
+                {question.type === 'line' && '连线题'}
+                {question.type === 'calculations' && '计算题'}
+                {question.type === 'writing' && '英语作文'}
+                {question.type === 'select' && '选择标记'}
+              </Typography>
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={4}>
+                  <TextField
+                    fullWidth
+                    label="分数"
+                    type="number"
+                    value={question.points}
+                    onChange={(e) => updateQuestion({ points: parseInt(e.target.value) || 0 })}
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+            </>
+          )}
+          {isQuestion && question && question.type === 'choice' && renderChoiceEditor(question)}
+          {isQuestion && question && question.type === 'fillin' && renderFillinEditor(question)}
+          {isQuestion && question && question.type === 'problem' && renderProblemEditor(question)}
+          {isQuestion && question && question.type === 'judgment' && renderJudgmentEditor(question)}
+          {isQuestion && question && question.type === 'line' && renderLineEditor(question)}
+          {isQuestion && question && question.type === 'calculations' && renderCalculationsEditor(question)}
+          {isQuestion && question && question.type === 'writing' && renderWritingEditor(question)}
+          {isQuestion && question && question.type === 'select' && renderSelectEditor(question)}
         </Box>
       )}
 
