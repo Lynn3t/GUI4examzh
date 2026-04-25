@@ -8,9 +8,7 @@ export interface ExamInfo {
   examTime: string
   totalPoints: number
   information: {
-    name: string
-    class: string
-    studentId: string
+    fields: { key: string; label: string; width?: number }[]
   }
 }
 

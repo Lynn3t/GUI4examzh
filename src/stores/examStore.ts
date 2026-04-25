@@ -34,17 +34,19 @@ const generateId = () => Math.random().toString(36).substring(2, 11)
 
 const initialState: Exam = {
   id: generateId(),
-  info: {
-    title: '未命名试卷',
-    subject: '',
-    examTime: '',
-    totalPoints: 0,
-    information: {
-      name: '姓名',
-      class: '班级',
-      studentId: '学号',
+info: {
+      title: '未命名试卷',
+      subject: '',
+      examTime: '',
+      totalPoints: 0,
+      information: {
+        fields: [
+          { key: 'name', label: '姓名', width: 6 },
+          { key: 'class', label: '班级', width: 6 },
+          { key: 'studentId', label: '学号', width: 4 },
+        ],
+      },
     },
-  },
   materials: [],
   poems: [],
   questions: [],
@@ -149,9 +151,11 @@ const useExamStore = create<ExamState>()(
               examTime: '',
               totalPoints: 0,
               information: {
-                name: '姓名',
-                class: '班级',
-                studentId: '学号',
+                fields: [
+                  { key: 'name', label: '姓名', width: 6 },
+                  { key: 'class', label: '班级', width: 6 },
+                  { key: 'studentId', label: '学号', width: 4 },
+                ],
               },
             },
             materials: [],

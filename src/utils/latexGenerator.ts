@@ -21,9 +21,11 @@ export function generateLatex(exam: Exam): string {
 
   // 考生信息
   latex += `\\information{\n`
-  latex += `  ${exam.info.information.name}\\underline{\\hspace{6em}},\n`
-  latex += `  ${exam.info.information.class}\\underline{\\hspace{6em}},\n`
-  latex += `  ${exam.info.information.studentId}\\underline{\\hspace{4em}}\n`
+  exam.info.information.fields.forEach((field, index) => {
+    const width = field.width || 6
+    const comma = index < exam.info.information.fields.length - 1 ? ',' : ''
+    latex += `  ${field.label}\\underline{\\hspace{${width}em}}${comma}\n`
+  })
   latex += `}\n\n`
 
   // 考试注意事项
