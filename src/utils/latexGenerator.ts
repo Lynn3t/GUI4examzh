@@ -1,4 +1,4 @@
-import type { Exam, Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion } from '@/types/exam'
+import type { Exam, Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion, CalculationsQuestion, MaterialQuestion, PoemQuestion, WritingQuestion, SelectQuestion } from '@/types/exam'
 
 /**
  * 将试卷数据转换为 LaTeX 代码
@@ -66,6 +66,21 @@ function generateQuestionLatex(question: Question, index: number): string {
       break
     case 'line':
       latex += generateLineQuestionLatex(question, index)
+      break
+    case 'calculations':
+      latex += generateCalculationsQuestionLatex(question, index)
+      break
+    case 'material':
+      latex += generateMaterialQuestionLatex(question, index)
+      break
+    case 'poem':
+      latex += generatePoemQuestionLatex(question, index)
+      break
+    case 'writing':
+      latex += generateWritingQuestionLatex(question, index)
+      break
+    case 'select':
+      latex += generateSelectQuestionLatex(question, index)
       break
   }
 
@@ -177,6 +192,130 @@ function generateLineQuestionLatex(question: LineQuestion, index: number): strin
   }
 
   latex += `  \\end{lineto}\n`
+  latex += `\\end{question}\n\n`
+
+  return latex
+}
+
+/**
+ * 生成计算题 LaTeX 代码
+ */
+function generateCalculationsQuestionLatex(question: CalculationsQuestion, index: number): string {
+  let latex = ''
+
+  latex += `\\begin{question}[points = ${question.points}]\n`
+  latex += `  ${question.content}\n\n`
+  latex += `  \\begin{calculations}[columns = ${question.columns}]\n`
+
+  question.items.forEach((item) => {
+    if (item.trim()) {
+      latex += `    \\item ${item}\n`
+    }
+  })
+
+  latex += `  \\end{calculations}\n`
+  latex += `\\end{question}\n\n`
+
+  return latex
+}
+
+/**
+ * 生成语文材料文章 LaTeX 代码
+ */
+function generateMaterialQuestionLatex(question: MaterialQuestion, index: number): string {
+  let latex = ''
+
+  // 构建 material 环境的可选参数
+  const options: string[] = []
+  if (question.title) {
+    options.push(`title = {${question.title}}`)
+  }
+  if (question.author) {
+    options.push(`author = {${question.author}}`)
+  }
+  if (question.source) {
+    options.push(`source = {${question.source}}`)
+  }
+
+  const optionsStr = options.length > 0 ? `[${options.join(', ')}]` : ''
+
+  latex += `\\begin{question}[points = ${question.points}]\n`
+  latex += `  \\begin{material}${optionsStr}\n`
+  latex += `    ${question.content}\n`
+  latex += `  \\end{material}\n`
+  latex += `\\end{question}\n\n`
+
+  return latex
+}
+
+/**
+ * 生成语文古诗 LaTeX 代码
+ */
+function generatePoemQuestionLatex(question: PoemQuestion, index: number): string {
+  let latex = ''
+
+  // 构建 poem 环境的可选参数
+  const options: string[] = []
+  if (question.title) {
+    options.push(`title = {${question.title}}`)
+  }
+  if (question.author) {
+    options.push(`author = {${question.author}}`)
+  }
+
+  const optionsStr = options.length > 0 ? `[${options.join(', ')}]` : ''
+
+  latex += `\\begin{question}[points = ${question.points}]\n`
+  latex += `  \\begin{poem}${optionsStr}\n`
+  
+  // 处理古诗内容，替换注释标记
+  let content = question.content
+  question.annotations.forEach((annotation, i) => {
+    const placeholder = `{\\zhu{${annotation.text}}}`
+    content = content.replace(`{${i + 1}}`, placeholder)
+  })
+  
+  latex += `    ${content}\n`
+  latex += `  \\end{poem}\n`
+  latex += `\\end{question}\n\n`
+
+  return latex
+}
+
+/**
+ * 生成英语作文框 LaTeX 代码
+ */
+function generateWritingQuestionLatex(question: WritingQuestion, index: number): string {
+  let latex = ''
+
+  latex += `\\begin{question}[points = ${question.points}]\n`
+  latex += `  \\begin{writingbox}[title = {${question.title}}]\n`
+  latex += `    ${question.content}\n`
+  latex += `    \\vspace*{4em}\n`
+  latex += `  \\end{writingbox}\n`
+  latex += `\\end{question}\n\n`
+
+  return latex
+}
+
+/**
+ * 生成选择标记题型 LaTeX 代码
+ */
+function generateSelectQuestionLatex(question: SelectQuestion, index: number): string {
+  let latex = ''
+
+  latex += `\\begin{question}[points = ${question.points}]\n`
+  latex += `  ${question.content}\n\n`
+  latex += `  \\begin{select}\n`
+
+  question.items.forEach((item) => {
+    if (item.text.trim()) {
+      const sitem = item.marked ? '\\sitem*' : '\\sitem'
+      latex += `    ${sitem} ${item.text}\n`
+    }
+  })
+
+  latex += `  \\end{select}\n`
   latex += `\\end{question}\n\n`
 
   return latex

@@ -24,6 +24,30 @@ function QuestionList() {
         rightItems: ['', ''],
         connections: [],
       }),
+      ...(type === 'calculations' && {
+        items: ['', '', '', ''],
+        columns: 2,
+      }),
+      ...(type === 'material' && {
+        content: '',
+        title: '',
+        author: '',
+        source: '',
+      }),
+      ...(type === 'poem' && {
+        content: '',
+        title: '',
+        author: '',
+        annotations: [],
+      }),
+      ...(type === 'writing' && {
+        content: '',
+        title: '',
+      }),
+      ...(type === 'select' && {
+        content: '',
+        items: [{ text: '', marked: false }],
+      }),
     }
     actions.addQuestion(newQuestion)
     actions.selectQuestion(newQuestion.id)
@@ -41,6 +65,11 @@ function QuestionList() {
       problem: '解答题',
       judgment: '判断题',
       line: '连线题',
+      calculations: '计算题',
+      material: '语文材料',
+      poem: '语文古诗',
+      writing: '英语作文',
+      select: '选择标记',
     }
     return typeLabels[question.type]
   }
@@ -99,6 +128,46 @@ function QuestionList() {
           onClick={() => handleAddQuestion('line')}
         >
           连线题
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddQuestion('calculations')}
+        >
+          计算题
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddQuestion('material')}
+        >
+          语文材料
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddQuestion('poem')}
+        >
+          语文古诗
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddQuestion('writing')}
+        >
+          英语作文
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddQuestion('select')}
+        >
+          选择标记
         </Button>
       </Box>
 
