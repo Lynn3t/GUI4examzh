@@ -1,6 +1,6 @@
 import { Box, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Typography, Button, Menu, MenuItem } from '@mui/material'
-import { Add as AddIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon } from '@mui/icons-material'
-import { useState } from 'react'
+import { Add as AddIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon, DragIndicator as DragIndicatorIcon } from '@mui/icons-material'
+import { useState, useRef } from 'react'
 import { useExamStore } from '@/stores/examStore'
 import type { Question, QuestionType } from '@/types/exam'
 
@@ -8,6 +8,8 @@ function QuestionList() {
   const { exam, selectedQuestionId, actions } = useExamStore()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [contextMenuQuestion, setContextMenuQuestion] = useState<string | null>(null)
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
+  const dragOverIndex = useRef<number | null>(null)
 
   const handleAddQuestion = (type: QuestionType) => {
     const newQuestion: Question = {
@@ -83,6 +85,31 @@ function QuestionList() {
   const handleCloseMenu = () => {
     setAnchorEl(null)
     setContextMenuQuestion(null)
+  }
+
+  // 拖拽事件处理
+  const handleDragStart = (event: React.DragEvent, index: number) => {
+    setDraggingIndex(index)
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (event: React.DragEvent, index: number) => {
+    event.preventDefault()
+    if (draggingIndex !== null && draggingIndex !== index) {
+      dragOverIndex.current = index
+    }
+  }
+
+  const handleDragEnd = () => {
+    if (draggingIndex !== null && dragOverIndex.current !== null) {
+      actions.moveQuestion(draggingIndex, dragOverIndex.current)
+    }
+    setDraggingIndex(null)
+    dragOverIndex.current = null
+  }
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault()
   }
 
   return (
@@ -182,12 +209,18 @@ function QuestionList() {
             <ListItem
               key={question.id}
               button
+              draggable
               selected={selectedQuestionId === question.id}
               onClick={() => actions.selectQuestion(question.id)}
               onContextMenu={(e) => handleContextMenu(e, question.id)}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              onDrop={handleDrop}
               sx={{
                 borderRadius: 1,
                 mb: 0.5,
+                opacity: draggingIndex === index ? 0.5 : 1,
                 '&:hover': { bgcolor: 'action.hover' },
                 '&.Mui-selected': {
                   bgcolor: 'action.selected',
@@ -195,6 +228,13 @@ function QuestionList() {
                 },
               }}
             >
+              <DragIndicatorIcon
+                sx={{
+                  mr: 1,
+                  cursor: 'grab',
+                  color: 'text.secondary',
+                }}
+              />
               <ListItemText
                 primary={`${index + 1}. ${getQuestionLabel(question)}`}
                 secondary={`${question.points} 分`}

@@ -19,6 +19,8 @@ interface ExamState {
     redo: () => void
     canUndo: () => boolean
     canRedo: () => boolean
+    importExam: (exam: Exam) => void
+    clearExam: () => void
   }
 }
 
@@ -122,6 +124,37 @@ const useExamStore = create<ExamState>()(
         },
         canUndo: () => get().historyIndex > 0,
         canRedo: () => get().historyIndex < get().history.length - 1,
+        importExam: (newExam: Exam) => {
+          set({
+            exam: newExam,
+            selectedQuestionId: null,
+            history: [newExam],
+            historyIndex: 0,
+          })
+        },
+        clearExam: () => {
+          const emptyExam: Exam = {
+            id: generateId(),
+            info: {
+              title: '未命名试卷',
+              subject: '',
+              examTime: '',
+              totalPoints: 0,
+              information: {
+                name: '姓名',
+                class: '班级',
+                studentId: '学号',
+              },
+            },
+            questions: [],
+          }
+          set({
+            exam: emptyExam,
+            selectedQuestionId: null,
+            history: [emptyExam],
+            historyIndex: 0,
+          })
+        },
       },
     }),
     {

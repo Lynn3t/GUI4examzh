@@ -3,6 +3,8 @@ import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material'
 import { useState } from 'react'
 import { useExamStore } from '@/stores/examStore'
 import FormulaEditor from './FormulaEditor'
+import ImageProcessor from './ImageProcessor'
+import GeometryDrawer from './GeometryDrawer'
 import type { Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion, CalculationsQuestion, MaterialQuestion, PoemQuestion, WritingQuestion, SelectQuestion } from '@/types/exam'
 
 function QuestionEditor() {
@@ -10,6 +12,22 @@ function QuestionEditor() {
   const [tabValue, setTabValue] = useState(0)
   const [formula, setFormula] = useState('')
   const question = exam.questions.find((q) => q.id === selectedQuestionId)
+
+  const handleImageInsert = (svgContent: string) => {
+    // 将图片代码插入到当前题目的题干中
+    if (question && selectedQuestionId) {
+      const newContent = question.content + '\n\n' + svgContent
+      actions.updateQuestion(selectedQuestionId, { content: newContent })
+    }
+  }
+
+  const handleSvgInsert = (svgContent: string) => {
+    // 将 SVG 代码插入到当前题目的题干中
+    if (question && selectedQuestionId) {
+      const newContent = question.content + '\n\n' + svgContent
+      actions.updateQuestion(selectedQuestionId, { content: newContent })
+    }
+  }
 
   if (!question) {
     return (
@@ -521,23 +539,25 @@ function QuestionEditor() {
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab label="题目编辑" />
           <Tab label="公式编辑器" />
+          <Tab label="图片处理" />
+          <Tab label="几何绘图" />
         </Tabs>
       </Box>
 
       {/* 题目编辑标签页 */}
       {tabValue === 0 && (
         <Box sx={{ mt: 2 }}>
-      {/* 题目类型特定的编辑器 */}
-      {question.type === 'choice' && renderChoiceEditor(question)}
-      {question.type === 'fillin' && renderFillinEditor(question)}
-      {question.type === 'problem' && renderProblemEditor(question)}
-      {question.type === 'judgment' && renderJudgmentEditor(question)}
-      {question.type === 'line' && renderLineEditor(question)}
-      {question.type === 'calculations' && renderCalculationsEditor(question)}
-      {question.type === 'material' && renderMaterialEditor(question)}
-      {question.type === 'poem' && renderPoemEditor(question)}
-      {question.type === 'writing' && renderWritingEditor(question)}
-      {question.type === 'select' && renderSelectEditor(question)}
+          {/* 题目类型特定的编辑器 */}
+          {question.type === 'choice' && renderChoiceEditor(question)}
+          {question.type === 'fillin' && renderFillinEditor(question)}
+          {question.type === 'problem' && renderProblemEditor(question)}
+          {question.type === 'judgment' && renderJudgmentEditor(question)}
+          {question.type === 'line' && renderLineEditor(question)}
+          {question.type === 'calculations' && renderCalculationsEditor(question)}
+          {question.type === 'material' && renderMaterialEditor(question)}
+          {question.type === 'poem' && renderPoemEditor(question)}
+          {question.type === 'writing' && renderWritingEditor(question)}
+          {question.type === 'select' && renderSelectEditor(question)}
         </Box>
       )}
 
@@ -547,8 +567,22 @@ function QuestionEditor() {
           <FormulaEditor
             value={formula}
             onChange={setFormula}
-            label="公式编辑器（暂未集成到题目中）"
+            label="公式编辑器"
           />
+        </Box>
+      )}
+
+      {/* 图片处理标签页 */}
+      {tabValue === 2 && (
+        <Box sx={{ mt: 2 }}>
+          <ImageProcessor onImageInsert={handleImageInsert} />
+        </Box>
+      )}
+
+      {/* 几何绘图标签页 */}
+      {tabValue === 3 && (
+        <Box sx={{ mt: 2 }}>
+          <GeometryDrawer onInsertSvg={handleSvgInsert} />
         </Box>
       )}
     </Box>
