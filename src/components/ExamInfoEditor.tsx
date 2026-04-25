@@ -24,6 +24,8 @@ function ExamInfoEditor() {
     actions.setExamInfo({ information: { fields: newFields } })
   }
 
+  const fields = info.information?.fields || []
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {/* 试卷基本信息 */}
@@ -34,7 +36,7 @@ function ExamInfoEditor() {
         <TextField
           fullWidth
           label="试卷标题"
-          value={info.title}
+          value={info.title || ''}
           onChange={(e) => actions.setExamInfo({ title: e.target.value })}
           size="small"
           margin="normal"
@@ -42,7 +44,7 @@ function ExamInfoEditor() {
         <TextField
           fullWidth
           label="科目"
-          value={info.subject}
+          value={info.subject || ''}
           onChange={(e) => actions.setExamInfo({ subject: e.target.value })}
           size="small"
           margin="normal"
@@ -50,7 +52,7 @@ function ExamInfoEditor() {
         <TextField
           fullWidth
           label="考试时间"
-          value={info.examTime}
+          value={info.examTime || ''}
           onChange={(e) => actions.setExamInfo({ examTime: e.target.value })}
           size="small"
           margin="normal"
@@ -69,7 +71,7 @@ function ExamInfoEditor() {
             添加字段
           </Button>
         </Box>
-        {info.information.fields.map((field) => (
+        {fields.map((field) => (
           <Grid container spacing={1} key={field.key} sx={{ mb: 1, alignItems: 'center' }}>
             <Grid item xs={6}>
               <TextField
@@ -95,7 +97,7 @@ function ExamInfoEditor() {
               <IconButton
                 size="small"
                 onClick={() => deleteField(field.key)}
-                disabled={info.information.fields.length <= 1}
+                disabled={fields.length <= 1}
               >
                 <RemoveIcon />
               </IconButton>

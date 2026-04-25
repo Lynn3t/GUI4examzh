@@ -291,7 +291,7 @@ function QuestionList() {
 
       {/* 语文材料列表 */}
       <List dense sx={{ mb: 2 }}>
-        {exam.materials.map((material) => (
+        {(exam.materials || []).map((material) => (
           <ListItem
             key={material.id}
             button
@@ -331,7 +331,7 @@ function QuestionList() {
 
       {/* 语文古诗列表 */}
       <List dense sx={{ mb: 2 }}>
-        {exam.poems.map((poem) => (
+        {(exam.poems || []).map((poem) => (
           <ListItem
             key={poem.id}
             button
@@ -373,12 +373,12 @@ function QuestionList() {
 
       {/* 题目列表 */}
       <List dense>
-        {exam.questions.length === 0 && exam.materials.length === 0 && exam.poems.length === 0 ? (
+        {exam.questions?.length === 0 && (exam.materials?.length || 0) === 0 && (exam.poems?.length || 0) === 0 ? (
           <Typography color="text.secondary" textAlign="center" py={4}>
             暂无题目，请添加题目
           </Typography>
         ) : (
-          exam.questions.map((question, index) => (
+          (exam.questions || []).map((question, index) => (
             <ListItem
               key={question.id}
               button

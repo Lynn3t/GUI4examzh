@@ -159,7 +159,7 @@ function PreviewPage({ onBack }: PreviewPageProps) {
                   <Typography variant="caption" color="text.secondary">
                     题目数量
                   </Typography>
-                  <Typography variant="body1">{exam.questions.length} 题</Typography>
+                  <Typography variant="body1">{exam.questions?.length || 0} 题</Typography>
                 </Box>
               </Box>
             </TabPanel>

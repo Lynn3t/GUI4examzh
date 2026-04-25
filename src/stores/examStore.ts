@@ -225,6 +225,65 @@ const useExamStore = create<ExamState>()(
     }),
     {
       name: 'exam-zh-editor-storage',
+      partialize: (state) => ({
+        exam: state.exam,
+        selectedQuestionId: state.selectedQuestionId,
+        history: state.history,
+        historyIndex: state.historyIndex,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        
+        if (!state.exam) {
+          state.exam = initialState
+        }
+        
+        if (!state.exam.info) {
+          state.exam.info = initialState.info
+        }
+        
+        if (!state.exam.info.information || typeof state.exam.info.information === 'string') {
+          state.exam.info.information = {
+            fields: [
+              { key: 'name', label: '姓名', width: 6 },
+              { key: 'class', label: '班级', width: 6 },
+              { key: 'studentId', label: '学号', width: 4 },
+            ],
+          }
+        } else {
+          const info = state.exam.info.information as any
+          if (!Array.isArray(info.fields)) {
+            state.exam.info.information = {
+              fields: [
+                { key: 'name', label: info.name || '姓名', width: 6 },
+                { key: 'class', label: info.class || '班级', width: 6 },
+                { key: 'studentId', label: info.studentId || '学号', width: 4 },
+              ],
+            }
+          }
+        }
+        
+        if (!Array.isArray(state.exam.materials)) {
+          state.exam.materials = []
+        }
+        if (!Array.isArray(state.exam.poems)) {
+          state.exam.poems = []
+        }
+        if (!Array.isArray(state.exam.questions)) {
+          state.exam.questions = []
+        }
+        
+        if (typeof state.selectedQuestionId === 'undefined') {
+          state.selectedQuestionId = null
+        }
+        if (!Array.isArray(state.history)) {
+          state.history = [state.exam]
+          state.historyIndex = 0
+        }
+        if (typeof state.historyIndex !== 'number') {
+          state.historyIndex = 0
+        }
+      },
     }
   )
 )

@@ -12,9 +12,13 @@ function QuestionEditor() {
   const [tabValue, setTabValue] = useState(0)
   const [formula, setFormula] = useState('')
   
-  const question = exam.questions.find((q) => q.id === selectedQuestionId)
-  const material = exam.materials.find((m) => m.id === selectedQuestionId)
-  const poem = exam.poems.find((p) => p.id === selectedQuestionId)
+  const questions = exam.questions || []
+  const materials = exam.materials || []
+  const poems = exam.poems || []
+  
+  const question = questions.find((q) => q.id === selectedQuestionId)
+  const material = materials.find((m) => m.id === selectedQuestionId)
+  const poem = poems.find((p) => p.id === selectedQuestionId)
 
   const handleImageInsert = (svgContent: string) => {
     // 将图片代码插入到当前题目的题干中
