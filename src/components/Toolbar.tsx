@@ -1,11 +1,15 @@
 import { AppBar, Toolbar as MuiToolbar, Typography, Button, Box, IconButton, Tooltip, Menu, MenuItem } from '@mui/material'
-import { Save as SaveIcon, Download as DownloadIcon, Upload as UploadIcon, Undo as UndoIcon, Redo as RedoIcon, MoreVert as MoreVertIcon } from '@mui/icons-material'
+import { Save as SaveIcon, Download as DownloadIcon, Upload as UploadIcon, Undo as UndoIcon, Redo as RedoIcon, MoreVert as MoreVertIcon, Visibility as VisibilityIcon } from '@mui/icons-material'
 import { useState, useRef } from 'react'
 import { useExamStore } from '@/stores/examStore'
 import { downloadLatex } from '@/utils/latexGenerator'
 import { exportExamToJson, importExamFromJson } from '@/utils/importExport'
 
-function Toolbar() {
+interface ToolbarProps {
+  onShowPreview?: () => void
+}
+
+function Toolbar({ onShowPreview }: ToolbarProps) {
   const { exam, actions } = useExamStore()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -95,6 +99,13 @@ function Toolbar() {
             onClick={handleSave}
           >
             保存
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<VisibilityIcon />}
+            onClick={onShowPreview}
+          >
+            预览
           </Button>
           <Button
             variant="contained"

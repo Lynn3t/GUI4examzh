@@ -70,13 +70,13 @@ const useExamStore = create<ExamState>()(
           addToHistory(newExam, set)
         },
         updateQuestion: (id, updates) => {
-          const newExam = {
+          const newExam: Exam = {
             ...get().exam,
             questions: get().exam.questions.map((q) =>
               q.id === id ? { ...q, ...updates } : q
-            ),
+            ) as Question[],
           }
-          set({ exam: newExam })
+          set(() => ({ exam: newExam }))
           addToHistory(newExam, set)
         },
         deleteQuestion: (id) => {
@@ -84,11 +84,11 @@ const useExamStore = create<ExamState>()(
             ...get().exam,
             questions: get().exam.questions.filter((q) => q.id !== id),
           }
-          set({
+          set(() => ({
             exam: newExam,
             selectedQuestionId:
               get().selectedQuestionId === id ? null : get().selectedQuestionId,
-          })
+          }))
           addToHistory(newExam, set)
         },
         selectQuestion: (id) => set({ selectedQuestionId: id }),
@@ -100,7 +100,7 @@ const useExamStore = create<ExamState>()(
             ...get().exam,
             questions,
           }
-          set({ exam: newExam })
+          set(() => ({ exam: newExam }))
           addToHistory(newExam, set)
         },
         generateId,
@@ -125,12 +125,12 @@ const useExamStore = create<ExamState>()(
         canUndo: () => get().historyIndex > 0,
         canRedo: () => get().historyIndex < get().history.length - 1,
         importExam: (newExam: Exam) => {
-          set({
+          set(() => ({
             exam: newExam,
             selectedQuestionId: null,
             history: [newExam],
             historyIndex: 0,
-          })
+          }))
         },
         clearExam: () => {
           const emptyExam: Exam = {
@@ -148,12 +148,12 @@ const useExamStore = create<ExamState>()(
             },
             questions: [],
           }
-          set({
+          set(() => ({
             exam: emptyExam,
             selectedQuestionId: null,
             history: [emptyExam],
             historyIndex: 0,
-          })
+          }))
         },
       },
     }),
@@ -165,7 +165,7 @@ const useExamStore = create<ExamState>()(
 
 // 添加历史记录的辅助函数
 function addToHistory(newExam: Exam, set: (fn: (state: any) => any) => void) {
-  set((state: ExamState) => {
+  set((state: any) => {
     const newHistory = state.history.slice(0, state.historyIndex + 1)
     newHistory.push(newExam)
     

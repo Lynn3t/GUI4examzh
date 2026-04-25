@@ -1,5 +1,4 @@
 import { Box, TextField, Typography, Paper, Grid, Button } from '@mui/material'
-import { useState } from 'react'
 
 interface FormulaEditorProps {
   value: string
@@ -8,7 +7,6 @@ interface FormulaEditorProps {
 }
 
 function FormulaEditor({ value, onChange, label = '公式编辑器' }: FormulaEditorProps) {
-  const [preview, setPreview] = useState(false)
 
   const formulaButtons = [
     // 基本运算

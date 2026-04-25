@@ -12,45 +12,110 @@ function QuestionList() {
   const dragOverIndex = useRef<number | null>(null)
 
   const handleAddQuestion = (type: QuestionType) => {
-    const newQuestion: Question = {
-      id: actions.generateId(),
-      type,
-      content: '',
-      points: 5,
-      ...(type === 'choice' && { answer: 'A', options: ['', '', '', ''] }),
-      ...(type === 'fillin' && { answer: '' }),
-      ...(type === 'problem' && { solution: '' }),
-      ...(type === 'judgment' && { answer: 'true' }),
-      ...(type === 'line' && {
-        leftItems: ['', ''],
-        rightItems: ['', ''],
-        connections: [],
-      }),
-      ...(type === 'calculations' && {
-        items: ['', '', '', ''],
-        columns: 2,
-      }),
-      ...(type === 'material' && {
-        content: '',
-        title: '',
-        author: '',
-        source: '',
-      }),
-      ...(type === 'poem' && {
-        content: '',
-        title: '',
-        author: '',
-        annotations: [],
-      }),
-      ...(type === 'writing' && {
-        content: '',
-        title: '',
-      }),
-      ...(type === 'select' && {
-        content: '',
-        items: [{ text: '', marked: false }],
-      }),
+    const id = actions.generateId()
+    let newQuestion: Question
+
+    switch (type) {
+      case 'choice':
+        newQuestion = {
+          id,
+          type: 'choice',
+          content: '',
+          points: 5,
+          answer: 'A',
+          options: ['', '', '', ''],
+        }
+        break
+      case 'fillin':
+        newQuestion = {
+          id,
+          type: 'fillin',
+          content: '',
+          points: 5,
+          answer: '',
+        }
+        break
+      case 'problem':
+        newQuestion = {
+          id,
+          type: 'problem',
+          content: '',
+          points: 5,
+          solution: '',
+        }
+        break
+      case 'judgment':
+        newQuestion = {
+          id,
+          type: 'judgment',
+          content: '',
+          points: 5,
+          answer: 'true',
+        }
+        break
+      case 'line':
+        newQuestion = {
+          id,
+          type: 'line',
+          content: '',
+          points: 5,
+          leftItems: ['', ''],
+          rightItems: ['', ''],
+          connections: [],
+        }
+        break
+      case 'calculations':
+        newQuestion = {
+          id,
+          type: 'calculations',
+          content: '',
+          points: 5,
+          items: ['', '', '', ''],
+          columns: 2,
+        }
+        break
+      case 'material':
+        newQuestion = {
+          id,
+          type: 'material',
+          content: '',
+          points: 5,
+          title: '',
+          author: '',
+          source: '',
+        }
+        break
+      case 'poem':
+        newQuestion = {
+          id,
+          type: 'poem',
+          content: '',
+          points: 5,
+          title: '',
+          author: '',
+          annotations: [],
+        }
+        break
+      case 'writing':
+        newQuestion = {
+          id,
+          type: 'writing',
+          content: '',
+          title: '',
+          points: 5,
+        }
+        break
+      case 'select':
+        newQuestion = {
+          id,
+          type: 'select',
+          content: '',
+          points: 5,
+          items: [{ text: '', marked: false }],
+        }
+        break
     }
+
     actions.addQuestion(newQuestion)
     actions.selectQuestion(newQuestion.id)
   }
@@ -79,7 +144,7 @@ function QuestionList() {
   const handleContextMenu = (event: React.MouseEvent, questionId: string) => {
     event.preventDefault()
     setContextMenuQuestion(questionId)
-    setAnchorEl(event.currentTarget)
+    setAnchorEl(event.currentTarget as HTMLElement)
   }
 
   const handleCloseMenu = () => {

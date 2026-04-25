@@ -90,7 +90,7 @@ function generateQuestionLatex(question: Question, index: number): string {
 /**
  * 生成选择题 LaTeX 代码
  */
-function generateChoiceQuestionLatex(question: ChoiceQuestion, index: number): string {
+function generateChoiceQuestionLatex(question: ChoiceQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`
@@ -112,7 +112,7 @@ function generateChoiceQuestionLatex(question: ChoiceQuestion, index: number): s
 /**
  * 生成填空题 LaTeX 代码
  */
-function generateFillinQuestionLatex(question: FillinQuestion, index: number): string {
+function generateFillinQuestionLatex(question: FillinQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`
@@ -125,7 +125,7 @@ function generateFillinQuestionLatex(question: FillinQuestion, index: number): s
 /**
  * 生成解答题 LaTeX 代码
  */
-function generateProblemQuestionLatex(question: ProblemQuestion, index: number): string {
+function generateProblemQuestionLatex(question: ProblemQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{problem}[points = ${question.points}]\n`
@@ -145,7 +145,7 @@ function generateProblemQuestionLatex(question: ProblemQuestion, index: number):
 /**
  * 生成判断题 LaTeX 代码
  */
-function generateJudgmentQuestionLatex(question: JudgmentQuestion, index: number): string {
+function generateJudgmentQuestionLatex(question: JudgmentQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`
@@ -158,7 +158,7 @@ function generateJudgmentQuestionLatex(question: JudgmentQuestion, index: number
 /**
  * 生成连线题 LaTeX 代码
  */
-function generateLineQuestionLatex(question: LineQuestion, index: number): string {
+function generateLineQuestionLatex(question: LineQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`
@@ -200,7 +200,7 @@ function generateLineQuestionLatex(question: LineQuestion, index: number): strin
 /**
  * 生成计算题 LaTeX 代码
  */
-function generateCalculationsQuestionLatex(question: CalculationsQuestion, index: number): string {
+function generateCalculationsQuestionLatex(question: CalculationsQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`
@@ -222,7 +222,7 @@ function generateCalculationsQuestionLatex(question: CalculationsQuestion, index
 /**
  * 生成语文材料文章 LaTeX 代码
  */
-function generateMaterialQuestionLatex(question: MaterialQuestion, index: number): string {
+function generateMaterialQuestionLatex(question: MaterialQuestion, _index: number): string {
   let latex = ''
 
   // 构建 material 环境的可选参数
@@ -251,7 +251,7 @@ function generateMaterialQuestionLatex(question: MaterialQuestion, index: number
 /**
  * 生成语文古诗 LaTeX 代码
  */
-function generatePoemQuestionLatex(question: PoemQuestion, index: number): string {
+function generatePoemQuestionLatex(question: PoemQuestion, _index: number): string {
   let latex = ''
 
   // 构建 poem 环境的可选参数
@@ -285,7 +285,7 @@ function generatePoemQuestionLatex(question: PoemQuestion, index: number): strin
 /**
  * 生成英语作文框 LaTeX 代码
  */
-function generateWritingQuestionLatex(question: WritingQuestion, index: number): string {
+function generateWritingQuestionLatex(question: WritingQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`
@@ -301,7 +301,7 @@ function generateWritingQuestionLatex(question: WritingQuestion, index: number):
 /**
  * 生成选择标记题型 LaTeX 代码
  */
-function generateSelectQuestionLatex(question: SelectQuestion, index: number): string {
+function generateSelectQuestionLatex(question: SelectQuestion, _index: number): string {
   let latex = ''
 
   latex += `\\begin{question}[points = ${question.points}]\n`

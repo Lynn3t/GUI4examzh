@@ -1,13 +1,11 @@
-import { Box, Typography, Button, ButtonGroup, Paper, IconButton, TextField, Grid } from '@mui/material'
+import { Box, Typography, Button, ButtonGroup, Paper } from '@mui/material'
 import { 
   Straighten as LineIcon, 
   Circle as CircleIcon, 
   ChangeHistory as TriangleIcon,
-  Add as AddIcon,
   Delete as DeleteIcon,
   Save as SaveIcon,
   Clear as ClearIcon,
-  GridOn as GridIcon,
 } from '@mui/icons-material'
 import { useState, useRef, useEffect } from 'react'
 
@@ -33,10 +31,8 @@ function GeometryDrawer({ onInsertSvg }: GeometryDrawerProps) {
   const [shapes, setShapes] = useState<Shape[]>([])
   const [currentTool, setCurrentTool] = useState<'line' | 'circle' | 'triangle' | 'point' | 'text'>('line')
   const [currentPoints, setCurrentPoints] = useState<Point[]>([])
-  const [showGrid, setShowGrid] = useState(true)
-  const [pointLabels, setPointLabels] = useState<string[]>([])
   const [nextLabelIndex, setNextLabelIndex] = useState(0)
-  const [scale, setScale] = useState(20) // 每个单位的像素数
+  const scale = 20 // 每个单位的像素数
 
   const canvasWidth = 400
   const canvasHeight = 300
@@ -60,7 +56,7 @@ function GeometryDrawer({ onInsertSvg }: GeometryDrawerProps) {
     ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
     // 绘制网格
-    if (showGrid) {
+    if (true) {
       ctx.strokeStyle = '#e0e0e0'
       ctx.lineWidth = 1
       for (let x = 0; x <= canvasWidth; x += scale) {
@@ -182,7 +178,7 @@ function GeometryDrawer({ onInsertSvg }: GeometryDrawerProps) {
 
       ctx.setLineDash([])
     }
-  }, [shapes, currentPoints, currentTool, showGrid, scale])
+  }, [shapes, currentPoints, currentTool, scale])
 
   // 处理画布点击
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
