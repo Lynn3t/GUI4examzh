@@ -1,0 +1,7 @@
+name = "exam-zh-editor"
+compatibility_date = "2024-04-25"
+
+[build]
+command = "npm run build"
+
+pages_build_output_dir = "dist"
