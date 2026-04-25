@@ -1,4 +1,4 @@
-name = "exam-zh-editor"
+name = "exam-zh-webui"
 compatibility_date = "2024-04-25"
 
 [build]
