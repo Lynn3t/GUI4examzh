@@ -1,10 +1,14 @@
-import { Box, TextField, Typography, Button, Grid, IconButton } from '@mui/material'
+import { Box, TextField, Typography, Button, Grid, IconButton, Tabs, Tab } from '@mui/material'
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material'
+import { useState } from 'react'
 import { useExamStore } from '@/stores/examStore'
+import FormulaEditor from './FormulaEditor'
 import type { Question, ChoiceQuestion, FillinQuestion, ProblemQuestion, JudgmentQuestion, LineQuestion } from '@/types/exam'
 
 function QuestionEditor() {
   const { exam, selectedQuestionId, actions } = useExamStore()
+  const [tabValue, setTabValue] = useState(0)
+  const [formula, setFormula] = useState('')
   const question = exam.questions.find((q) => q.id === selectedQuestionId)
 
   if (!question) {
@@ -19,6 +23,10 @@ function QuestionEditor() {
     if (selectedQuestionId) {
       actions.updateQuestion(selectedQuestionId, updates)
     }
+  }
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue)
   }
 
   // 选择题编辑器
@@ -244,12 +252,36 @@ function QuestionEditor() {
         </Grid>
       </Grid>
 
-      {/* 题目类型特定的编辑器 */}
-      {question.type === 'choice' && renderChoiceEditor(question)}
-      {question.type === 'fillin' && renderFillinEditor(question)}
-      {question.type === 'problem' && renderProblemEditor(question)}
-      {question.type === 'judgment' && renderJudgmentEditor(question)}
-      {question.type === 'line' && renderLineEditor(question)}
+      {/* 标签页 */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={handleTabChange}>
+          <Tab label="题目编辑" />
+          <Tab label="公式编辑器" />
+        </Tabs>
+      </Box>
+
+      {/* 题目编辑标签页 */}
+      {tabValue === 0 && (
+        <Box sx={{ mt: 2 }}>
+          {/* 题目类型特定的编辑器 */}
+          {question.type === 'choice' && renderChoiceEditor(question)}
+          {question.type === 'fillin' && renderFillinEditor(question)}
+          {question.type === 'problem' && renderProblemEditor(question)}
+          {question.type === 'judgment' && renderJudgmentEditor(question)}
+          {question.type === 'line' && renderLineEditor(question)}
+        </Box>
+      )}
+
+      {/* 公式编辑器标签页 */}
+      {tabValue === 1 && (
+        <Box sx={{ mt: 2 }}>
+          <FormulaEditor
+            value={formula}
+            onChange={setFormula}
+            label="公式编辑器（暂未集成到题目中）"
+          />
+        </Box>
+      )}
     </Box>
   )
 }

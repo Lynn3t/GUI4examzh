@@ -5,6 +5,8 @@ import type { Exam, ExamInfo, Question } from '@/types/exam'
 interface ExamState {
   exam: Exam
   selectedQuestionId: string | null
+  history: Exam[]
+  historyIndex: number
   actions: {
     setExamInfo: (info: Partial<ExamInfo>) => void
     addQuestion: (question: Question) => void
@@ -13,6 +15,10 @@ interface ExamState {
     selectQuestion: (id: string | null) => void
     moveQuestion: (fromIndex: number, toIndex: number) => void
     generateId: () => string
+    undo: () => void
+    redo: () => void
+    canUndo: () => boolean
+    canRedo: () => boolean
   }
 }
 
@@ -34,59 +40,88 @@ const initialState: Exam = {
   questions: [],
 }
 
-export const useExamStore = create<ExamState>()(
+// 保存历史记录的最大数量
+const MAX_HISTORY = 50
+
+const useExamStore = create<ExamState>()(
   persist(
     (set, get) => ({
       exam: initialState,
       selectedQuestionId: null,
+      history: [initialState],
+      historyIndex: 0,
       actions: {
-        setExamInfo: (updates) =>
-          set((state) => ({
-            exam: {
-              ...state.exam,
-              info: { ...state.exam.info, ...updates },
-            },
-          })),
-        addQuestion: (question) =>
-          set((state) => ({
-            exam: {
-              ...state.exam,
-              questions: [...state.exam.questions, question],
-            },
-          })),
-        updateQuestion: (id, updates) =>
-          set((state) => ({
-            exam: {
-              ...state.exam,
-              questions: state.exam.questions.map((q) =>
-                q.id === id ? { ...q, ...updates } : q
-              ),
-            },
-          })),
-        deleteQuestion: (id) =>
-          set((state) => ({
-            exam: {
-              ...state.exam,
-              questions: state.exam.questions.filter((q) => q.id !== id),
-            },
+        setExamInfo: (updates) => {
+          const newExam = {
+            ...get().exam,
+            info: { ...get().exam.info, ...updates },
+          }
+          set({ exam: newExam })
+          addToHistory(newExam, set)
+        },
+        addQuestion: (question) => {
+          const newExam = {
+            ...get().exam,
+            questions: [...get().exam.questions, question],
+          }
+          set({ exam: newExam })
+          addToHistory(newExam, set)
+        },
+        updateQuestion: (id, updates) => {
+          const newExam = {
+            ...get().exam,
+            questions: get().exam.questions.map((q) =>
+              q.id === id ? { ...q, ...updates } : q
+            ),
+          }
+          set({ exam: newExam })
+          addToHistory(newExam, set)
+        },
+        deleteQuestion: (id) => {
+          const newExam = {
+            ...get().exam,
+            questions: get().exam.questions.filter((q) => q.id !== id),
+          }
+          set({
+            exam: newExam,
             selectedQuestionId:
-              state.selectedQuestionId === id ? null : state.selectedQuestionId,
-          })),
-        selectQuestion: (id) =>
-          set({ selectedQuestionId: id }),
-        moveQuestion: (fromIndex, toIndex) =>
-          set((state) => {
-            const questions = [...state.exam.questions]
-            const [removed] = questions.splice(fromIndex, 1)
-            questions.splice(toIndex, 0, removed)
-            return {
-              exam: {
-                ...state.exam,
-                questions,
-              },
-            }
-          }),
+              get().selectedQuestionId === id ? null : get().selectedQuestionId,
+          })
+          addToHistory(newExam, set)
+        },
+        selectQuestion: (id) => set({ selectedQuestionId: id }),
+        moveQuestion: (fromIndex, toIndex) => {
+          const questions = [...get().exam.questions]
+          const [removed] = questions.splice(fromIndex, 1)
+          questions.splice(toIndex, 0, removed)
+          const newExam = {
+            ...get().exam,
+            questions,
+          }
+          set({ exam: newExam })
+          addToHistory(newExam, set)
+        },
         generateId,
+        undo: () => {
+          const { history, historyIndex } = get()
+          if (historyIndex > 0) {
+            set({
+              exam: history[historyIndex - 1],
+              historyIndex: historyIndex - 1,
+            })
+          }
+        },
+        redo: () => {
+          const { history, historyIndex } = get()
+          if (historyIndex < history.length - 1) {
+            set({
+              exam: history[historyIndex + 1],
+              historyIndex: historyIndex + 1,
+            })
+          }
+        },
+        canUndo: () => get().historyIndex > 0,
+        canRedo: () => get().historyIndex < get().history.length - 1,
       },
     }),
     {
@@ -94,3 +129,24 @@ export const useExamStore = create<ExamState>()(
     }
   )
 )
+
+// 添加历史记录的辅助函数
+function addToHistory(newExam: Exam, set: (fn: (state: any) => any) => void) {
+  set((state: ExamState) => {
+    const newHistory = state.history.slice(0, state.historyIndex + 1)
+    newHistory.push(newExam)
+    
+    // 限制历史记录数量
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory.shift()
+    }
+    
+    return {
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+    }
+  })
+}
+
+export { useExamStore }
+
