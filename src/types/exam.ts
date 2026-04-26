@@ -12,6 +12,58 @@ export interface ExamInfo {
   }
 }
 
+export interface ExamSetupPage {
+  size?: string
+  showHead?: boolean
+  showFoot?: boolean
+  footContent?: string
+}
+
+export interface ExamSetupTitle {
+  titleFormat?: string
+  subjectFormat?: string
+}
+
+export interface ExamSetupQuestion {
+  showPoints?: string
+}
+
+export interface ExamSetupChoices {
+  labelSep?: string
+}
+
+export interface ExamSetupParen {
+  showParen?: boolean
+  type?: string
+}
+
+export interface ExamSetupSolution {
+  showSolution?: string
+  preAnalysis?: string[]
+  scoreShowleader?: boolean
+}
+
+export interface ExamSetupConfig {
+  page?: ExamSetupPage
+  title?: ExamSetupTitle
+  question?: ExamSetupQuestion
+  choices?: ExamSetupChoices
+  paren?: ExamSetupParen
+  solution?: ExamSetupSolution
+}
+
+export interface ExamSection {
+  id: string
+  type: 'section' | 'subsection'
+  title: string
+}
+
+export interface ExamNote {
+  id: string
+  type: 'note'
+  content: string
+}
+
 export interface ChoiceQuestion {
   id: string
   type: 'choice'
@@ -64,12 +116,10 @@ export interface CalculationsQuestion {
   type: 'calculations'
   content: string
   points: number
-  items: string[] // 计算题项列表
-  columns: number // 列数
+  items: string[]
+  columns: number
   solution?: string
 }
-
-
 
 export interface WritingQuestion {
   id: string
@@ -84,7 +134,7 @@ export interface SelectQuestion {
   type: 'select'
   content: string
   points: number
-  items: { text: string; marked: boolean }[] // 选项列表，marked 表示是否被标记
+  items: { text: string; marked: boolean }[]
 }
 
 export interface ExamMaterial {
@@ -102,17 +152,66 @@ export interface ExamPoem {
   content: string
   title?: string
   author?: string
-  annotations: { text: string; index: number }[] // 注释列表
+  annotations: { text: string; index: number }[]
 }
 
 export type NormalQuestion = ChoiceQuestion | FillinQuestion | ProblemQuestion | JudgmentQuestion | LineQuestion | CalculationsQuestion | WritingQuestion | SelectQuestion
-
+export type ExamContent = ExamSection | ExamNote | ExamMaterial | ExamPoem | NormalQuestion
 export type Question = NormalQuestion
 
 export interface Exam {
   id: string
   info: ExamInfo
-  materials: ExamMaterial[]
-  poems: ExamPoem[]
-  questions: Question[]
+  examSetup: ExamSetupConfig
+  contents: ExamContent[]
+}
+
+export function isQuestionContent(content: ExamContent): content is Question {
+  return ['choice', 'fillin', 'problem', 'judgment', 'line', 'calculations', 'writing', 'select'].includes(content.type)
+}
+
+export function isMaterialContent(content: ExamContent): content is ExamMaterial {
+  return content.type === 'material'
+}
+
+export function isPoemContent(content: ExamContent): content is ExamPoem {
+  return content.type === 'poem'
+}
+
+export function isSectionContent(content: ExamContent): content is ExamSection {
+  return content.type === 'section' || content.type === 'subsection'
+}
+
+export function isNoteContent(content: ExamContent): content is ExamNote {
+  return content.type === 'note'
+}
+
+export function getQuestionContents(exam: Exam): Question[] {
+  return exam.contents.filter(isQuestionContent)
+}
+
+export function calculateTotalPoints(exam: Exam): number {
+  return getQuestionContents(exam).reduce((total, question) => total + (question.points || 0), 0)
+}
+
+export function normalizeExam(exam: Partial<Exam>): Exam {
+  const legacyQuestions = Array.isArray((exam as any).questions) ? (exam as any).questions : []
+  const legacyMaterials = Array.isArray((exam as any).materials) ? (exam as any).materials : []
+  const legacyPoems = Array.isArray((exam as any).poems) ? (exam as any).poems : []
+  const legacySections = Array.isArray((exam as any).sections) ? (exam as any).sections : []
+  const contents = Array.isArray(exam.contents)
+    ? exam.contents
+    : [...legacySections, ...legacyMaterials, ...legacyPoems, ...legacyQuestions]
+
+  const normalizedExam = {
+    ...exam,
+    contents,
+  } as Exam
+
+  normalizedExam.info = {
+    ...normalizedExam.info,
+    totalPoints: calculateTotalPoints(normalizedExam),
+  }
+
+  return normalizedExam
 }

@@ -3,6 +3,7 @@ import { ArrowBack as ArrowBackIcon, FileCopy as CopyIcon } from '@mui/icons-mat
 import { useState } from 'react'
 import { useExamStore } from '@/stores/examStore'
 import { generateLatex } from '@/utils/latexGenerator'
+import { calculateTotalPoints, getQuestionContents } from '@/types/exam'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -42,6 +43,8 @@ function PreviewPage({ onBack }: PreviewPageProps) {
   const [tabValue, setTabValue] = useState(0)
 
   const latexCode = generateLatex(exam)
+  const questionCount = getQuestionContents(exam).length
+  const totalPoints = calculateTotalPoints(exam)
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
@@ -153,13 +156,13 @@ function PreviewPage({ onBack }: PreviewPageProps) {
                   <Typography variant="caption" color="text.secondary">
                     总分
                   </Typography>
-                  <Typography variant="body1">{exam.info.totalPoints} 分</Typography>
+                  <Typography variant="body1">{totalPoints} 分</Typography>
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     题目数量
                   </Typography>
-                  <Typography variant="body1">{exam.questions?.length || 0} 题</Typography>
+                  <Typography variant="body1">{questionCount} 题</Typography>
                 </Box>
               </Box>
             </TabPanel>

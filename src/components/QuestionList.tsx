@@ -1,16 +1,19 @@
-import { Box, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Typography, Button, Menu, MenuItem, Divider } from '@mui/material'
-import { Add as AddIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon, DragIndicator as DragIndicatorIcon } from '@mui/icons-material'
-import { useState, useRef } from 'react'
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, Checkbox, IconButton, Typography, Button, Menu, MenuItem, Chip } from '@mui/material'
+import { Add as AddIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon, DragIndicator as DragIndicatorIcon, VerticalAlignTop as MoveTopIcon, VerticalAlignBottom as MoveBottomIcon } from '@mui/icons-material'
+import { useMemo, useRef, useState } from 'react'
 import { useExamStore } from '@/stores/examStore'
-import type { Question, QuestionType, ExamMaterial, ExamPoem } from '@/types/exam'
+import type { Question, QuestionType, ExamMaterial, ExamPoem, ExamSection, ExamContent, ExamNote } from '@/types/exam'
+import { isMaterialContent, isNoteContent, isPoemContent, isQuestionContent, isSectionContent } from '@/types/exam'
 
 function QuestionList() {
-  const { exam, selectedQuestionId, actions } = useExamStore()
+  const { exam, selectedQuestionId, selectedIds, actions } = useExamStore()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [contextMenuType, setContextMenuType] = useState<'question' | 'material' | 'poem' | null>(null)
   const [contextMenuId, setContextMenuId] = useState<string | null>(null)
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
   const dragOverIndex = useRef<number | null>(null)
+
+  const contents = exam.contents || []
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
   const handleAddQuestion = (type: QuestionType) => {
     const id = actions.generateId()
@@ -18,80 +21,28 @@ function QuestionList() {
 
     switch (type) {
       case 'choice':
-        newQuestion = {
-          id,
-          type: 'choice',
-          content: '',
-          points: 5,
-          answer: 'A',
-          options: ['', '', '', ''],
-        }
+        newQuestion = { id, type: 'choice', content: '', points: 5, answer: 'A', options: ['', '', '', ''] }
         break
       case 'fillin':
-        newQuestion = {
-          id,
-          type: 'fillin',
-          content: '',
-          points: 5,
-          answer: '',
-        }
+        newQuestion = { id, type: 'fillin', content: '', points: 5, answer: '' }
         break
       case 'problem':
-        newQuestion = {
-          id,
-          type: 'problem',
-          content: '',
-          points: 5,
-          solution: '',
-        }
+        newQuestion = { id, type: 'problem', content: '', points: 5, solution: '' }
         break
       case 'judgment':
-        newQuestion = {
-          id,
-          type: 'judgment',
-          content: '',
-          points: 5,
-          answer: 'true',
-        }
+        newQuestion = { id, type: 'judgment', content: '', points: 5, answer: 'true' }
         break
       case 'line':
-        newQuestion = {
-          id,
-          type: 'line',
-          content: '',
-          points: 5,
-          leftItems: ['', ''],
-          rightItems: ['', ''],
-          connections: [],
-        }
+        newQuestion = { id, type: 'line', content: '', points: 5, leftItems: ['', ''], rightItems: ['', ''], connections: [] }
         break
       case 'calculations':
-        newQuestion = {
-          id,
-          type: 'calculations',
-          content: '',
-          points: 5,
-          items: ['', '', '', ''],
-          columns: 2,
-        }
+        newQuestion = { id, type: 'calculations', content: '', points: 5, items: ['', '', '', ''], columns: 2 }
         break
       case 'writing':
-        newQuestion = {
-          id,
-          type: 'writing',
-          content: '',
-          title: '',
-          points: 5,
-        }
+        newQuestion = { id, type: 'writing', content: '', title: '', points: 60 }
         break
       case 'select':
-        newQuestion = {
-          id,
-          type: 'select',
-          content: '',
-          points: 5,
-          items: [{ text: '', marked: false }],
-        }
+        newQuestion = { id, type: 'select', content: '', points: 5, items: [{ text: '', marked: false }] }
         break
       default:
         return
@@ -99,50 +50,53 @@ function QuestionList() {
 
     actions.addQuestion(newQuestion)
     actions.selectQuestion(newQuestion.id)
+    actions.setSortingMode(false)
   }
 
   const handleAddMaterial = () => {
-    const id = actions.generateId()
-    const newMaterial: ExamMaterial = {
-      id,
-      type: 'material',
-      content: '',
-      title: '',
-      author: '',
-      source: '',
-    }
+    const newMaterial: ExamMaterial = { id: actions.generateId(), type: 'material', content: '', title: '', author: '', source: '' }
     actions.addMaterial(newMaterial)
+    actions.selectQuestion(newMaterial.id)
+    actions.setSortingMode(false)
   }
 
   const handleAddPoem = () => {
-    const id = actions.generateId()
-    const newPoem: ExamPoem = {
-      id,
-      type: 'poem',
-      content: '',
-      title: '',
-      author: '',
-      annotations: [],
-    }
+    const newPoem: ExamPoem = { id: actions.generateId(), type: 'poem', content: '', title: '', author: '', annotations: [] }
     actions.addPoem(newPoem)
+    actions.selectQuestion(newPoem.id)
+    actions.setSortingMode(false)
   }
 
-  const handleDeleteQuestion = (id: string) => {
-    actions.deleteQuestion(id)
-    handleCloseMenu()
+  const handleAddSection = (type: 'section' | 'subsection') => {
+    const section: ExamSection = {
+      id: actions.generateId(),
+      type,
+      title: type === 'section' ? '一、新建大题（10分）' : '（一）新建小节（本题共1小题，5分）',
+    }
+    actions.addSection(section)
+    actions.selectQuestion(section.id)
+    actions.setSortingMode(false)
   }
 
-  const handleDeleteMaterial = (id: string) => {
-    actions.deleteMaterial(id)
-    handleCloseMenu()
+  const handleAddNote = () => {
+    const note: ExamNote = {
+      id: actions.generateId(),
+      type: 'note',
+      content: '\\vspace{1em}\n\\noindent \\textbf{【注】}\\\\\n① 注释一。\\\\\n② 注释二。',
+    }
+    actions.addNote(note)
+    actions.selectQuestion(note.id)
+    actions.setSortingMode(false)
   }
 
-  const handleDeletePoem = (id: string) => {
-    actions.deletePoem(id)
-    handleCloseMenu()
-  }
+  const getContentLabel = (content: ExamContent, index: number) => {
+    if (isSectionContent(content)) {
+      return content.type === 'section' ? `大题：${content.title}` : `小节：${content.title}`
+    }
+    if (isMaterialContent(content)) return `材料：${content.title || '未命名材料'}`
+    if (isPoemContent(content)) return `古诗：${content.title || '未命名古诗'}`
+    if (isNoteContent(content)) return `注释/说明 ${index + 1}`
 
-  const getQuestionLabel = (question: Question) => {
     const typeLabels: Record<string, string> = {
       choice: '选择题',
       fillin: '填空题',
@@ -150,34 +104,41 @@ function QuestionList() {
       judgment: '判断题',
       line: '连线题',
       calculations: '计算题',
-      writing: '英语作文',
+      writing: '写作题',
       select: '选择标记',
     }
-    return typeLabels[question.type]
+    return `${index + 1}. ${typeLabels[content.type]}`
   }
 
-  const getMaterialLabel = (material: ExamMaterial) => {
-    return material.title || '语文材料'
+  const getMetaText = (content: ExamContent) => {
+    if (isQuestionContent(content)) return `${content.points} 分`
+    if (isSectionContent(content)) return content.type === 'section' ? '\\section*' : '\\subsection*'
+    if (isNoteContent(content)) return '原样输出 LaTeX'
+    return content.type === 'material' ? '\\begin{material}' : '\\begin{poem}'
   }
 
-  const getPoemLabel = (poem: ExamPoem) => {
-    return poem.title || '语文古诗'
-  }
-
-  const handleContextMenu = (event: React.MouseEvent, type: 'question' | 'material' | 'poem', id: string) => {
+  const handleContextMenu = (event: React.MouseEvent, id: string) => {
     event.preventDefault()
-    setContextMenuType(type)
     setContextMenuId(id)
     setAnchorEl(event.currentTarget as HTMLElement)
   }
 
   const handleCloseMenu = () => {
     setAnchorEl(null)
-    setContextMenuType(null)
     setContextMenuId(null)
   }
 
-  // 拖拽事件处理
+  const handleDeleteById = (id: string) => {
+    const item = contents.find((content) => content.id === id)
+    if (!item) return
+    if (isQuestionContent(item)) actions.deleteQuestion(id)
+    else if (isMaterialContent(item)) actions.deleteMaterial(id)
+    else if (isPoemContent(item)) actions.deletePoem(id)
+    else if (isSectionContent(item)) actions.deleteSection(id)
+    else if (isNoteContent(item)) actions.deleteNote(id)
+    handleCloseMenu()
+  }
+
   const handleDragStart = (event: React.DragEvent, index: number) => {
     setDraggingIndex(index)
     event.dataTransfer.effectAllowed = 'move'
@@ -198,274 +159,79 @@ function QuestionList() {
     dragOverIndex.current = null
   }
 
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault()
-  }
-
   return (
     <Box>
-      {/* 添加题目按钮 */}
       <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={handleAddMaterial}
-        >
-          语文材料
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={handleAddPoem}
-        >
-          语文古诗
-        </Button>
-        <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('choice')}
-        >
-          选择题
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('fillin')}
-        >
-          填空题
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('problem')}
-        >
-          解答题
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('judgment')}
-        >
-          判断题
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('line')}
-        >
-          连线题
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('calculations')}
-        >
-          计算题
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('writing')}
-        >
-          英语作文
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => handleAddQuestion('select')}
-        >
-          选择标记
-        </Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddSection('section')}>大题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddSection('subsection')}>小节</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={handleAddNote}>注释</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={handleAddMaterial}>语文材料</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={handleAddPoem}>语文古诗</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('choice')}>选择题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('fillin')}>填空题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('problem')}>解答题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('judgment')}>判断题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('line')}>连线题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('calculations')}>计算题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('writing')}>写作题</Button>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => handleAddQuestion('select')}>选择标记</Button>
       </Box>
 
-      {/* 语文材料列表 */}
-      <List dense sx={{ mb: 2 }}>
-        {(exam.materials || []).map((material) => (
-          <ListItem
-            key={material.id}
-            button
-            selected={selectedQuestionId === material.id}
-            onClick={() => actions.selectQuestion(material.id)}
-            onContextMenu={(e) => handleContextMenu(e, 'material', material.id)}
-            sx={{
-              borderRadius: 1,
-              mb: 0.5,
-              borderLeft: '3px solid',
-              borderLeftColor: 'primary.main',
-              '&:hover': { bgcolor: 'action.hover' },
-              '&.Mui-selected': {
-                bgcolor: 'action.selected',
-                '&:hover': { bgcolor: 'action.selected' },
-              },
-            }}
-          >
-            <ListItemText
-              primary={`材料：${getMaterialLabel(material)}`}
-            />
-            <ListItemSecondaryAction>
-              <IconButton
-                edge="end"
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleContextMenu(e, 'material', material.id)
-                }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-        ))}
-      </List>
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Button size="small" onClick={actions.selectAll}>全选</Button>
+        <Button size="small" onClick={actions.clearSelection} disabled={selectedIds.length === 0}>清空选择</Button>
+        <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={actions.batchDelete} disabled={selectedIds.length === 0}>批量删除</Button>
+        <Button size="small" startIcon={<MoveTopIcon />} onClick={() => actions.moveSelectedTo(0)} disabled={selectedIds.length === 0}>移到顶部</Button>
+        <Button size="small" startIcon={<MoveBottomIcon />} onClick={() => actions.moveSelectedTo(contents.length)} disabled={selectedIds.length === 0}>移到底部</Button>
+        {selectedIds.length > 0 && <Chip size="small" label={`已选 ${selectedIds.length} 项`} />}
+      </Box>
 
-      {/* 语文古诗列表 */}
-      <List dense sx={{ mb: 2 }}>
-        {(exam.poems || []).map((poem) => (
-          <ListItem
-            key={poem.id}
-            button
-            selected={selectedQuestionId === poem.id}
-            onClick={() => actions.selectQuestion(poem.id)}
-            onContextMenu={(e) => handleContextMenu(e, 'poem', poem.id)}
-            sx={{
-              borderRadius: 1,
-              mb: 0.5,
-              borderLeft: '3px solid',
-              borderLeftColor: 'secondary.main',
-              '&:hover': { bgcolor: 'action.hover' },
-              '&.Mui-selected': {
-                bgcolor: 'action.selected',
-                '&:hover': { bgcolor: 'action.selected' },
-              },
-            }}
-          >
-            <ListItemText
-              primary={`古诗：${getPoemLabel(poem)}`}
-            />
-            <ListItemSecondaryAction>
-              <IconButton
-                edge="end"
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleContextMenu(e, 'poem', poem.id)
-                }}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-        ))}
-      </List>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* 题目列表 */}
       <List dense>
-        {exam.questions?.length === 0 && (exam.materials?.length || 0) === 0 && (exam.poems?.length || 0) === 0 ? (
-          <Typography color="text.secondary" textAlign="center" py={4}>
-            暂无题目，请添加题目
-          </Typography>
+        {contents.length === 0 ? (
+          <Typography color="text.secondary" textAlign="center" py={4}>暂无内容，请添加题目或结构块</Typography>
         ) : (
-          (exam.questions || []).map((question, index) => (
-            <ListItem
-              key={question.id}
-              button
-              draggable
-              selected={selectedQuestionId === question.id}
-              onClick={() => actions.selectQuestion(question.id)}
-              onContextMenu={(e) => handleContextMenu(e, 'question', question.id)}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              onDrop={handleDrop}
-              sx={{
-                borderRadius: 1,
-                mb: 0.5,
-                opacity: draggingIndex === index ? 0.5 : 1,
-                '&:hover': { bgcolor: 'action.hover' },
-                '&.Mui-selected': {
-                  bgcolor: 'action.selected',
-                  '&:hover': { bgcolor: 'action.selected' },
-                },
+          contents.map((content, index) => (
+            <ListItemButton
+              key={content.id}
+              selected={selectedQuestionId === content.id}
+              onClick={() => {
+                actions.selectQuestion(content.id)
+                actions.setSortingMode(false)
               }}
+              onContextMenu={(event) => handleContextMenu(event, content.id)}
+              draggable
+              onDragStart={(event) => handleDragStart(event, index)}
+              onDragOver={(event) => handleDragOver(event, index)}
+              onDragEnd={handleDragEnd}
+              onDrop={(event) => event.preventDefault()}
+              sx={{ borderRadius: 1, mb: 0.5, opacity: draggingIndex === index ? 0.5 : 1 }}
             >
-              <DragIndicatorIcon
-                sx={{
-                  mr: 1,
-                  cursor: 'grab',
-                  color: 'text.secondary',
+              <ListItemIcon sx={{ minWidth: 32 }} onClick={(event) => event.stopPropagation()}>
+                <Checkbox edge="start" checked={selectedSet.has(content.id)} onChange={() => actions.toggleSelectId(content.id)} />
+              </ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 28 }}>
+                <DragIndicatorIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+              </ListItemIcon>
+              <ListItemText primary={getContentLabel(content, index)} secondary={getMetaText(content)} />
+              <IconButton
+                edge="end"
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleContextMenu(event, content.id)
                 }}
-              />
-              <ListItemText
-                primary={`${index + 1}. ${getQuestionLabel(question)}`}
-                secondary={`${question.points} 分`}
-              />
-              <ListItemSecondaryAction>
-                <IconButton
-                  edge="end"
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleContextMenu(e, 'question', question.id)
-                  }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </ListItemButton>
           ))
         )}
       </List>
 
-      {/* 右键菜单 */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleCloseMenu}
-      >
-        {contextMenuId && contextMenuType === 'question' && (
-          <MenuItem
-            onClick={() => {
-              handleDeleteQuestion(contextMenuId)
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <DeleteIcon sx={{ mr: 1 }} />
-            删除题目
-          </MenuItem>
-        )}
-        {contextMenuId && contextMenuType === 'material' && (
-          <MenuItem
-            onClick={() => {
-              handleDeleteMaterial(contextMenuId)
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <DeleteIcon sx={{ mr: 1 }} />
-            删除材料
-          </MenuItem>
-        )}
-        {contextMenuId && contextMenuType === 'poem' && (
-          <MenuItem
-            onClick={() => {
-              handleDeletePoem(contextMenuId)
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <DeleteIcon sx={{ mr: 1 }} />
-            删除古诗
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
+        {contextMenuId && (
+          <MenuItem onClick={() => handleDeleteById(contextMenuId)} sx={{ color: 'error.main' }}>
+            <DeleteIcon sx={{ mr: 1 }} />删除
           </MenuItem>
         )}
       </Menu>

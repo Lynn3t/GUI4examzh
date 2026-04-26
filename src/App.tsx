@@ -5,11 +5,13 @@ import QuestionList from './components/QuestionList'
 import QuestionEditor from './components/QuestionEditor'
 import Toolbar from './components/Toolbar'
 import PreviewPage from './pages/PreviewPage'
+import { useExamStore } from './stores/examStore'
 
 type Page = 'editor' | 'preview'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('editor')
+  const { isSortingMode } = useExamStore()
 
   const handleShowPreview = () => {
     setCurrentPage('preview')
@@ -47,7 +49,7 @@ function App() {
             <Grid item xs={12} md={5} sx={{ height: '100%' }}>
               <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
                 <Typography variant="h6" gutterBottom>
-                  题目编辑
+                  {isSortingMode ? '题目排序' : '内容编辑'}
                 </Typography>
                 <QuestionEditor />
               </Paper>

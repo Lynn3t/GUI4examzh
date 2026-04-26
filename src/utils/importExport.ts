@@ -1,4 +1,5 @@
 import type { Exam } from '@/types/exam'
+import { normalizeExam } from '@/types/exam'
 
 /**
  * 导出试卷数据为 JSON 文件
@@ -26,10 +27,10 @@ export function importExamFromJson(file: File): Promise<Exam> {
     reader.onload = (event) => {
       try {
         const json = event.target?.result as string
-        const exam = JSON.parse(json) as Exam
+        const exam = normalizeExam(JSON.parse(json) as Exam)
         
         // 验证数据结构
-        if (!exam.info || !exam.questions || !exam.materials || !exam.poems) {
+        if (!exam.info || !Array.isArray(exam.contents)) {
           throw new Error('无效的试卷数据格式')
         }
         
@@ -52,10 +53,10 @@ export function importExamFromJson(file: File): Promise<Exam> {
  */
 export function importExamFromJsonString(jsonString: string): Exam {
   try {
-    const exam = JSON.parse(jsonString) as Exam
+    const exam = normalizeExam(JSON.parse(jsonString) as Exam)
     
     // 验证数据结构
-    if (!exam.info || !exam.questions) {
+    if (!exam.info || !Array.isArray(exam.contents)) {
       throw new Error('无效的试卷数据格式')
     }
     

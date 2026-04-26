@@ -1,10 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Exam, ExamInfo, Question, ExamMaterial, ExamPoem } from '@/types/exam'
+import type { Exam, ExamInfo, Question, ExamMaterial, ExamPoem, ExamSection, ExamSetupConfig, ExamContent, ExamNote } from '@/types/exam'
+import { normalizeExam } from '@/types/exam'
 
 interface ExamState {
   exam: Exam
   selectedQuestionId: string | null
+  selectedIds: string[]
+  isSortingMode: boolean
   history: Exam[]
   historyIndex: number
   actions: {
@@ -14,6 +17,7 @@ interface ExamState {
     deleteQuestion: (id: string) => void
     selectQuestion: (id: string | null) => void
     moveQuestion: (fromIndex: number, toIndex: number) => void
+    moveSelectedTo: (targetIndex: number) => void
     generateId: () => string
     undo: () => void
     redo: () => void
@@ -27,200 +31,244 @@ interface ExamState {
     addPoem: (poem: ExamPoem) => void
     updatePoem: (id: string, updates: Partial<ExamPoem>) => void
     deletePoem: (id: string) => void
+    addSection: (section: ExamSection) => void
+    updateSection: (id: string, updates: Partial<ExamSection>) => void
+    deleteSection: (id: string) => void
+    addNote: (note: ExamNote) => void
+    updateNote: (id: string, updates: Partial<ExamNote>) => void
+    deleteNote: (id: string) => void
+    setExamSetup: (setup: Partial<ExamSetupConfig>) => void
+    toggleSelectId: (id: string) => void
+    selectAll: () => void
+    clearSelection: () => void
+    batchDelete: () => void
+    setSortingMode: (mode: boolean) => void
   }
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 11)
 
-const initialState: Exam = {
-  id: generateId(),
-info: {
-      title: '未命名试卷',
-      subject: '',
-      examTime: '',
-      totalPoints: 0,
-      information: {
-        fields: [
-          { key: 'name', label: '姓名', width: 6 },
-          { key: 'class', label: '班级', width: 6 },
-          { key: 'studentId', label: '学号', width: 4 },
-        ],
-      },
-    },
-  materials: [],
-  poems: [],
-  questions: [],
+const defaultExamSetup: ExamSetupConfig = {
+  page: { size: 'a4paper', showHead: true, showFoot: true, footContent: '试卷第 ; 页，共 ; 页' },
+  title: { titleFormat: '\\huge\\bfseries', subjectFormat: '\\Large\\bfseries' },
+  question: { showPoints: 'auto' },
+  choices: { labelSep: '0.5em' },
+  paren: { showParen: true, type: 'hfill' },
+  solution: { showSolution: 'show-move', preAnalysis: [], scoreShowleader: true },
 }
 
-// 保存历史记录的最大数量
+const createEmptyExam = (): Exam => normalizeExam({
+  id: generateId(),
+  info: {
+    title: '未命名试卷',
+    subject: '',
+    examTime: '',
+    totalPoints: 0,
+    information: {
+      fields: [
+        { key: 'name', label: '姓名', width: 6 },
+        { key: 'class', label: '班级', width: 6 },
+        { key: 'studentId', label: '考号', width: 8 },
+      ],
+    },
+  },
+  examSetup: { ...defaultExamSetup },
+  contents: [],
+})
+
+const initialState = createEmptyExam()
 const MAX_HISTORY = 50
+
+function commitExam(exam: Exam, set: (fn: (state: any) => any) => void, extra: Record<string, unknown> = {}) {
+  const normalizedExam = normalizeExam(exam)
+  set((state: any) => ({
+    ...extra,
+    exam: normalizedExam,
+    history: pushHistory(state.history, state.historyIndex, normalizedExam),
+    historyIndex: Math.min(state.historyIndex + 1, MAX_HISTORY - 1, pushHistory(state.history, state.historyIndex, normalizedExam).length - 1),
+  }))
+}
+
+function pushHistory(history: Exam[], historyIndex: number, exam: Exam) {
+  const next = history.slice(0, historyIndex + 1)
+  next.push(exam)
+  if (next.length > MAX_HISTORY) {
+    next.shift()
+  }
+  return next
+}
+
+function updateContent<T extends ExamContent>(contents: ExamContent[], id: string, updates: Partial<T>) {
+  return contents.map((item) => (item.id === id ? { ...item, ...updates } : item))
+}
+
+function deleteContent(contents: ExamContent[], id: string) {
+  return contents.filter((item) => item.id !== id)
+}
 
 const useExamStore = create<ExamState>()(
   persist(
     (set, get) => ({
       exam: initialState,
       selectedQuestionId: null,
+      selectedIds: [],
+      isSortingMode: true,
       history: [initialState],
       historyIndex: 0,
       actions: {
         setExamInfo: (updates) => {
-          const newExam = {
-            ...get().exam,
-            info: { ...get().exam.info, ...updates },
-          }
-          set({ exam: newExam })
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, info: { ...get().exam.info, ...updates } }, set)
         },
         addQuestion: (question) => {
-          const newExam = {
-            ...get().exam,
-            questions: [...get().exam.questions, question],
-          }
-          set({ exam: newExam })
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: [...get().exam.contents, question] }, set)
         },
         updateQuestion: (id, updates) => {
-          const newExam: Exam = {
-            ...get().exam,
-            questions: get().exam.questions.map((q) =>
-              q.id === id ? { ...q, ...updates } : q
-            ) as Question[],
-          }
-          set(() => ({ exam: newExam }))
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: updateContent(get().exam.contents, id, updates) }, set)
         },
         deleteQuestion: (id) => {
-          const newExam = {
-            ...get().exam,
-            questions: get().exam.questions.filter((q) => q.id !== id),
-          }
-          set(() => ({
-            exam: newExam,
-            selectedQuestionId:
-              get().selectedQuestionId === id ? null : get().selectedQuestionId,
-          }))
-          addToHistory(newExam, set)
+          commitExam(
+            { ...get().exam, contents: deleteContent(get().exam.contents, id) },
+            set,
+            { selectedQuestionId: get().selectedQuestionId === id ? null : get().selectedQuestionId }
+          )
         },
         selectQuestion: (id) => set({ selectedQuestionId: id }),
         moveQuestion: (fromIndex, toIndex) => {
-          const questions = [...get().exam.questions]
-          const [removed] = questions.splice(fromIndex, 1)
-          questions.splice(toIndex, 0, removed)
-          const newExam = {
-            ...get().exam,
-            questions,
-          }
-          set(() => ({ exam: newExam }))
-          addToHistory(newExam, set)
+          const contents = [...get().exam.contents]
+          const [removed] = contents.splice(fromIndex, 1)
+          contents.splice(toIndex, 0, removed)
+          commitExam({ ...get().exam, contents }, set)
+        },
+        moveSelectedTo: (targetIndex) => {
+          const { exam, selectedIds } = get()
+          if (selectedIds.length === 0) return
+          const selectedSet = new Set(selectedIds)
+          const moving = exam.contents.filter((item) => selectedSet.has(item.id))
+          const staying = exam.contents.filter((item) => !selectedSet.has(item.id))
+          const safeIndex = Math.max(0, Math.min(targetIndex, staying.length))
+          staying.splice(safeIndex, 0, ...moving)
+          commitExam({ ...exam, contents: staying }, set)
         },
         generateId,
         undo: () => {
           const { history, historyIndex } = get()
           if (historyIndex > 0) {
-            set({
-              exam: history[historyIndex - 1],
-              historyIndex: historyIndex - 1,
-            })
+            set({ exam: history[historyIndex - 1], historyIndex: historyIndex - 1 })
           }
         },
         redo: () => {
           const { history, historyIndex } = get()
           if (historyIndex < history.length - 1) {
-            set({
-              exam: history[historyIndex + 1],
-              historyIndex: historyIndex + 1,
-            })
+            set({ exam: history[historyIndex + 1], historyIndex: historyIndex + 1 })
           }
         },
         canUndo: () => get().historyIndex > 0,
         canRedo: () => get().historyIndex < get().history.length - 1,
-        importExam: (newExam: Exam) => {
-          set(() => ({
-            exam: newExam,
+        importExam: (newExam) => {
+          const normalizedExam = normalizeExam(newExam)
+          set({
+            exam: normalizedExam,
             selectedQuestionId: null,
-            history: [newExam],
+            selectedIds: [],
+            isSortingMode: true,
+            history: [normalizedExam],
             historyIndex: 0,
-          }))
+          })
         },
         clearExam: () => {
-          const emptyExam: Exam = {
-            id: generateId(),
-            info: {
-              title: '未命名试卷',
-              subject: '',
-              examTime: '',
-              totalPoints: 0,
-              information: {
-                fields: [
-                  { key: 'name', label: '姓名', width: 6 },
-                  { key: 'class', label: '班级', width: 6 },
-                  { key: 'studentId', label: '学号', width: 4 },
-                ],
-              },
-            },
-            materials: [],
-            poems: [],
-            questions: [],
-          }
-          set(() => ({
+          const emptyExam = createEmptyExam()
+          set({
             exam: emptyExam,
             selectedQuestionId: null,
+            selectedIds: [],
+            isSortingMode: true,
             history: [emptyExam],
             historyIndex: 0,
-          }))
+          })
         },
         addMaterial: (material) => {
-          const newExam = {
-            ...get().exam,
-            materials: [...get().exam.materials, material],
-          }
-          set({ exam: newExam })
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: [...get().exam.contents, material] }, set)
         },
         updateMaterial: (id, updates) => {
-          const newExam = {
-            ...get().exam,
-            materials: get().exam.materials.map((m) =>
-              m.id === id ? { ...m, ...updates } : m
-            ),
-          }
-          set(() => ({ exam: newExam }))
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: updateContent(get().exam.contents, id, updates) }, set)
         },
         deleteMaterial: (id) => {
-          const newExam = {
-            ...get().exam,
-            materials: get().exam.materials.filter((m) => m.id !== id),
-          }
-          set(() => ({ exam: newExam }))
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: deleteContent(get().exam.contents, id) }, set)
         },
         addPoem: (poem) => {
-          const newExam = {
-            ...get().exam,
-            poems: [...get().exam.poems, poem],
-          }
-          set({ exam: newExam })
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: [...get().exam.contents, poem] }, set)
         },
         updatePoem: (id, updates) => {
-          const newExam = {
-            ...get().exam,
-            poems: get().exam.poems.map((p) =>
-              p.id === id ? { ...p, ...updates } : p
-            ),
-          }
-          set(() => ({ exam: newExam }))
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: updateContent(get().exam.contents, id, updates) }, set)
         },
         deletePoem: (id) => {
-          const newExam = {
-            ...get().exam,
-            poems: get().exam.poems.filter((p) => p.id !== id),
-          }
-          set(() => ({ exam: newExam }))
-          addToHistory(newExam, set)
+          commitExam({ ...get().exam, contents: deleteContent(get().exam.contents, id) }, set)
         },
+        addSection: (section) => {
+          commitExam({ ...get().exam, contents: [...get().exam.contents, section] }, set)
+        },
+        updateSection: (id, updates) => {
+          commitExam({ ...get().exam, contents: updateContent(get().exam.contents, id, updates) }, set)
+        },
+        deleteSection: (id) => {
+          commitExam({ ...get().exam, contents: deleteContent(get().exam.contents, id) }, set)
+        },
+        addNote: (note) => {
+          commitExam({ ...get().exam, contents: [...get().exam.contents, note] }, set)
+        },
+        updateNote: (id, updates) => {
+          commitExam({ ...get().exam, contents: updateContent(get().exam.contents, id, updates) }, set)
+        },
+        deleteNote: (id) => {
+          commitExam({ ...get().exam, contents: deleteContent(get().exam.contents, id) }, set)
+        },
+        setExamSetup: (setup) => {
+          commitExam(
+            {
+              ...get().exam,
+              examSetup: {
+                ...get().exam.examSetup,
+                ...setup,
+                page: { ...get().exam.examSetup.page, ...setup.page },
+                title: { ...get().exam.examSetup.title, ...setup.title },
+                question: { ...get().exam.examSetup.question, ...setup.question },
+                choices: { ...get().exam.examSetup.choices, ...setup.choices },
+                paren: { ...get().exam.examSetup.paren, ...setup.paren },
+                solution: { ...get().exam.examSetup.solution, ...setup.solution },
+              },
+            },
+            set
+          )
+        },
+        toggleSelectId: (id) => {
+          const { selectedIds } = get()
+          set({
+            selectedIds: selectedIds.includes(id)
+              ? selectedIds.filter((sid) => sid !== id)
+              : [...selectedIds, id],
+          })
+        },
+        selectAll: () => {
+          set({ selectedIds: get().exam.contents.map((item) => item.id) })
+        },
+        clearSelection: () => set({ selectedIds: [] }),
+        batchDelete: () => {
+          const { exam, selectedIds } = get()
+          const idSet = new Set(selectedIds)
+          const currentSelectedId = get().selectedQuestionId
+          commitExam(
+            { ...exam, contents: exam.contents.filter((item) => !idSet.has(item.id)) },
+            set,
+            {
+              selectedIds: [],
+              selectedQuestionId:
+                currentSelectedId && idSet.has(currentSelectedId)
+                  ? null
+                  : currentSelectedId,
+            }
+          )
+        },
+        setSortingMode: (mode) => set({ isSortingMode: mode }),
       },
     }),
     {
@@ -233,78 +281,25 @@ const useExamStore = create<ExamState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
-        
-        if (!state.exam) {
-          state.exam = initialState
+        state.exam = normalizeExam(state.exam || createEmptyExam())
+        if (!state.exam.examSetup) {
+          state.exam.examSetup = { ...defaultExamSetup }
         }
-        
-        if (!state.exam.info) {
-          state.exam.info = initialState.info
-        }
-        
-        if (!state.exam.info.information || typeof state.exam.info.information === 'string') {
-          state.exam.info.information = {
-            fields: [
-              { key: 'name', label: '姓名', width: 6 },
-              { key: 'class', label: '班级', width: 6 },
-              { key: 'studentId', label: '学号', width: 4 },
-            ],
-          }
-        } else {
-          const info = state.exam.info.information as any
-          if (!Array.isArray(info.fields)) {
-            state.exam.info.information = {
-              fields: [
-                { key: 'name', label: info.name || '姓名', width: 6 },
-                { key: 'class', label: info.class || '班级', width: 6 },
-                { key: 'studentId', label: info.studentId || '学号', width: 4 },
-              ],
-            }
-          }
-        }
-        
-        if (!Array.isArray(state.exam.materials)) {
-          state.exam.materials = []
-        }
-        if (!Array.isArray(state.exam.poems)) {
-          state.exam.poems = []
-        }
-        if (!Array.isArray(state.exam.questions)) {
-          state.exam.questions = []
-        }
-        
         if (typeof state.selectedQuestionId === 'undefined') {
           state.selectedQuestionId = null
         }
-        if (!Array.isArray(state.history)) {
+        if (!Array.isArray(state.history) || state.history.length === 0) {
           state.history = [state.exam]
           state.historyIndex = 0
+        } else {
+          state.history = state.history.map((item) => normalizeExam(item))
         }
         if (typeof state.historyIndex !== 'number') {
-          state.historyIndex = 0
+          state.historyIndex = state.history.length - 1
         }
       },
     }
   )
 )
 
-// 添加历史记录的辅助函数
-function addToHistory(newExam: Exam, set: (fn: (state: any) => any) => void) {
-  set((state: any) => {
-    const newHistory = state.history.slice(0, state.historyIndex + 1)
-    newHistory.push(newExam)
-    
-    // 限制历史记录数量
-    if (newHistory.length > MAX_HISTORY) {
-      newHistory.shift()
-    }
-    
-    return {
-      history: newHistory,
-      historyIndex: newHistory.length - 1,
-    }
-  })
-}
-
 export { useExamStore }
-
