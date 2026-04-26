@@ -219,8 +219,8 @@ function QuestionEditor() {
   const renderSectionEditor = (q: ExamSection) => (
     <Box>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>结构块类型</Typography>
-      <Typography sx={{ mb: 2 }}>{q.type === 'section' ? '\\section*' : '\\subsection*'}</Typography>
-      <TextField fullWidth multiline label="标题" value={q.title} onChange={(e) => actions.updateSection(q.id, { title: e.target.value })} rows={3} />
+      <Typography sx={{ mb: 2 }}>{q.type === 'section' ? '大题' : '小节'}</Typography>
+      <TextField fullWidth multiline label="标题" value={q.title} onChange={(e) => actions.updateSection(q.id, { title: e.target.value, autoTitle: false })} rows={3} />
     </Box>
   )
 

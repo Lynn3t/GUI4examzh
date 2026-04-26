@@ -36,24 +36,26 @@ function App() {
         <Container maxWidth="xl" sx={{ py: 2, height: '100%' }}>
           <Grid container spacing={2} sx={{ height: '100%' }}>
             {/* 左侧：题目列表 */}
-            <Grid item xs={12} md={2} sx={{ height: '100%' }}>
+            <Grid item xs={12} md={isSortingMode ? 7 : 2} sx={{ height: '100%' }}>
               <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
                 <Typography variant="h6" gutterBottom>
-                  题目列表
+                  {isSortingMode ? '排序列表' : '题目列表'}
                 </Typography>
                 <QuestionList />
               </Paper>
             </Grid>
             
             {/* 中间：题目编辑器 */}
-            <Grid item xs={12} md={5} sx={{ height: '100%' }}>
-              <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-                <Typography variant="h6" gutterBottom>
-                  {isSortingMode ? '题目排序' : '内容编辑'}
-                </Typography>
-                <QuestionEditor />
-              </Paper>
-            </Grid>
+            {!isSortingMode && (
+              <Grid item xs={12} md={5} sx={{ height: '100%' }}>
+                <Paper sx={{ p: 2, height: '100%', overflow: 'auto' }}>
+                  <Typography variant="h6" gutterBottom>
+                    内容编辑
+                  </Typography>
+                  <QuestionEditor />
+                </Paper>
+              </Grid>
+            )}
             
             {/* 右侧：试卷信息 */}
             <Grid item xs={12} md={5} sx={{ height: '100%' }}>

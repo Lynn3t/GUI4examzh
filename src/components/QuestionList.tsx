@@ -3,7 +3,7 @@ import { Add as AddIcon, Delete as DeleteIcon, MoreVert as MoreVertIcon, DragInd
 import { useMemo, useRef, useState } from 'react'
 import { useExamStore } from '@/stores/examStore'
 import type { Question, QuestionType, ExamMaterial, ExamPoem, ExamSection, ExamContent, ExamNote } from '@/types/exam'
-import { isMaterialContent, isNoteContent, isPoemContent, isQuestionContent, isSectionContent } from '@/types/exam'
+import { getNextSectionTitle, getNextSubsectionTitle, isMaterialContent, isNoteContent, isPoemContent, isQuestionContent, isSectionContent } from '@/types/exam'
 
 function QuestionList() {
   const { exam, selectedQuestionId, selectedIds, actions } = useExamStore()
@@ -71,7 +71,8 @@ function QuestionList() {
     const section: ExamSection = {
       id: actions.generateId(),
       type,
-      title: type === 'section' ? '一、新建大题（10分）' : '（一）新建小节（本题共1小题，5分）',
+      title: type === 'section' ? getNextSectionTitle(contents) : getNextSubsectionTitle(contents),
+      autoTitle: true,
     }
     actions.addSection(section)
     actions.selectQuestion(section.id)
@@ -112,9 +113,9 @@ function QuestionList() {
 
   const getMetaText = (content: ExamContent) => {
     if (isQuestionContent(content)) return `${content.points} 分`
-    if (isSectionContent(content)) return content.type === 'section' ? '\\section*' : '\\subsection*'
+    if (isSectionContent(content)) return content.type === 'section' ? '大题结构' : '小节结构'
     if (isNoteContent(content)) return '原样输出 LaTeX'
-    return content.type === 'material' ? '\\begin{material}' : '\\begin{poem}'
+    return content.type === 'material' ? '语文材料结构' : '古诗结构'
   }
 
   const handleContextMenu = (event: React.MouseEvent, id: string) => {

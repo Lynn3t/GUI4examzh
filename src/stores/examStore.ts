@@ -55,6 +55,8 @@ const defaultExamSetup: ExamSetupConfig = {
   choices: { labelSep: '0.5em' },
   paren: { showParen: true, type: 'hfill' },
   solution: { showSolution: 'show-move', preAnalysis: [], scoreShowleader: true },
+  extraGroups: {},
+  extraRaw: '',
 }
 
 const createEmptyExam = (): Exam => normalizeExam({
@@ -235,6 +237,8 @@ const useExamStore = create<ExamState>()(
                 choices: { ...get().exam.examSetup.choices, ...setup.choices },
                 paren: { ...get().exam.examSetup.paren, ...setup.paren },
                 solution: { ...get().exam.examSetup.solution, ...setup.solution },
+                extraGroups: { ...get().exam.examSetup.extraGroups, ...setup.extraGroups },
+                extraRaw: typeof setup.extraRaw === 'undefined' ? get().exam.examSetup.extraRaw : setup.extraRaw,
               },
             },
             set
@@ -282,8 +286,22 @@ const useExamStore = create<ExamState>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return
         state.exam = normalizeExam(state.exam || createEmptyExam())
-        if (!state.exam.examSetup) {
-          state.exam.examSetup = { ...defaultExamSetup }
+        state.exam.examSetup = {
+          ...defaultExamSetup,
+          ...state.exam.examSetup,
+          page: { ...defaultExamSetup.page, ...state.exam.examSetup?.page },
+          title: { ...defaultExamSetup.title, ...state.exam.examSetup?.title },
+          question: { ...defaultExamSetup.question, ...state.exam.examSetup?.question },
+          choices: { ...defaultExamSetup.choices, ...state.exam.examSetup?.choices },
+          paren: { ...defaultExamSetup.paren, ...state.exam.examSetup?.paren },
+          solution: { ...defaultExamSetup.solution, ...state.exam.examSetup?.solution },
+          extraGroups: { ...defaultExamSetup.extraGroups, ...state.exam.examSetup?.extraGroups },
+        }
+        if (state.exam.examSetup.extraRaw && !state.exam.examSetup.extraGroups?.['其他参数']) {
+          state.exam.examSetup.extraGroups = {
+            ...state.exam.examSetup.extraGroups,
+            其他参数: state.exam.examSetup.extraRaw,
+          }
         }
         if (typeof state.selectedQuestionId === 'undefined') {
           state.selectedQuestionId = null

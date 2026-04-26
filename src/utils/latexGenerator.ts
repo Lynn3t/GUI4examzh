@@ -7,8 +7,13 @@ function escapeLatex(value: string): string {
 
 function generateExamSetup(exam: Exam): string {
   const { examSetup } = exam
-  const preAnalysis = examSetup.solution?.preAnalysis || []
+  const preAnalysis = (examSetup.solution?.preAnalysis || []).filter((item) => item.trim())
   const preAnalysisValue = preAnalysis.length === 0 ? '{}' : `{${preAnalysis.join(' ')}}`
+  const extraRaw = examSetup.extraRaw?.trim()
+  const extraGroups = Object.values(examSetup.extraGroups || {})
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+  const extraBlocks = [...extraGroups, ...(extraRaw ? [extraRaw] : [])]
 
   return `\\examsetup{
   page = {
@@ -35,7 +40,7 @@ function generateExamSetup(exam: Exam): string {
     show-solution = ${examSetup.solution?.showSolution || 'show-move'},
     pre-analysis = ${preAnalysisValue},
     score-showleader = ${String(Boolean(examSetup.solution?.scoreShowleader))},
-  }
+  }${extraBlocks.length ? `,\n${extraBlocks.join(',\n')}\n` : ''}
 }
 `
 }
