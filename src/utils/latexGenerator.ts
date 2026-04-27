@@ -74,7 +74,7 @@ export function generateLatex(exam: Exam): string {
     latex += generateContentLatex(content)
   })
 
-  latex += `\\n\\end{document}`
+  latex += `\n\\end{document}`
   return latex
 }
 
