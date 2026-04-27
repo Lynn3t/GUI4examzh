@@ -192,7 +192,9 @@ function generatePoemLatex(poem: ExamPoem): string {
 }
 
 function generateWritingQuestionLatex(question: WritingQuestion): string {
-  return `\\begin{problem}[points=${question.points}]\n${question.content}\n\n\\vspace{10cm}\n\\begin{center}\n  \\textcolor{gray}{（请在专用答题卡上的作文格内作答）}\n\\end{center}\n\\end{problem}\n\n`
+  let latex = `\\begin{problem}[points=${question.points}]\n${question.content}\n\n\\vspace{10cm}\n\\begin{center}\n  \\textcolor{gray}{（请在专用答题卡上的作文格内作答）}\n\\end{center}\n\\end{problem}\n\n`
+  latex += wrapSolution(question.solution)
+  return latex
 }
 
 function generateSelectQuestionLatex(question: SelectQuestion): string {

@@ -154,6 +154,7 @@ export interface WritingQuestion {
   content: string
   title: string
   points: number
+  solution?: string
 }
 
 export interface SelectQuestion {
